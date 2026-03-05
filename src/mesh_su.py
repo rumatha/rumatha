@@ -3,7 +3,6 @@ Mesh - Surface Unstructured.
 """
 
 import numpy as np
-import geom3d
 import geom3d_rat
 from fractions import Fraction as Fr
 
@@ -602,13 +601,13 @@ class Mesh:
         if print_edges_with_incident_faces:
             print('[EDGES WITH INCIDENT FACES]')
             for e in self.edges:
-                print(f'{e} --- [l = {e.length()}] --- {len(e.faces)}/{e.faces}')
+                print(f'{e} --- {len(e.faces)} / {e.faces}')
 
         if print_faces_neighbourhood:
             print('[FACES WITH NEIGHBOURHOOD]')
             for f in self.faces:
                 nh = f.neighbourhood()
-                print(f'{f} --- [s = {f.triangle().area()}] --- {len(nh)}/{nh}')
+                print(f'{f} --- {len(nh)} / {nh}')
 
     #-----------------------------------------------------------------------------------------------
 
@@ -696,15 +695,6 @@ class Mesh:
                 return f
 
         return None
-
-    #-----------------------------------------------------------------------------------------------
-
-    def find_face_by_id(self, id):
-        index = bisect_left(self.faces, id, key=lambda f:f.glo_id)
-        if index != len(self.faces) and self.faces[index].glo_id == id:
-            return self.faces[index]
-        else:
-            return None
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1660,9 +1650,7 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    test_name = 'cylinder/cyl_2'
-    in_mesh = Mesh(f'../data/meshes/{test_name}.dat')
-    out_mesh = in_mesh.delete_self_intersections_rat(denom=1000000, is_log=True) # denom - for bunny
-    out_mesh.store(f'../data/meshes/{test_name}_out.dat')
+    mesh = Mesh('../data/meshes/tetrahedron_double.dat')
+    mesh.print(True, True)
 
 # ==================================================================================================
