@@ -3733,6 +3733,28 @@ class Intersection:
             raise Exception('Intersection.triangle_triangle NOT IMPLEMENTED')
 
 #===================================================================================================
+# Global objects.
+#===================================================================================================
+
+# Base points.
+O = Point(Fr(0), Fr(0), Fr(0))
+X = Point(Fr(1), Fr(0), Fr(0))
+Y = Point(Fr(0), Fr(1), Fr(0))
+Z = Point(Fr(0), Fr(0), Fr(1))
+
+# Base lines.
+OX = Line.from_points(O, X)
+OY = Line.from_points(O, Y)
+OZ = Line.from_points(O, Z)
+
+# Base planes.
+OXY = Plane.from_points(O, X, Y)
+OYZ = Plane.from_points(O, Y, Z)
+OXZ = Plane.from_points(O, X, Z)
+
+#===================================================================================================
+# Global functions.
+#===================================================================================================
 
 def print_statistics():
     """
@@ -3751,17 +3773,7 @@ def test():
     """
 
     # objects.
-    O = Point(Fr(0), Fr(0), Fr(0))
-    X = Point(Fr(1), Fr(0), Fr(0))
-    Y = Point(Fr(0), Fr(1), Fr(0))
-    Z = Point(Fr(0), Fr(0), Fr(1))
-    OX = Line.from_points(O, X)
-    OY = Line.from_points(O, Y)
-    OZ = Line.from_points(O, Z)
     XY = Line.from_points(X, Y)
-    OXY = Plane.from_points(O, X, Y)
-    OYZ = Plane.from_points(O, Y, Z)
-    OXZ = Plane.from_points(O, X, Z)
     XYZ = Plane.from_points(X, Y, Z)
 
     # Perpendicular planes.

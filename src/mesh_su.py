@@ -1520,7 +1520,7 @@ class Mesh:
         #
 
         if is_log:
-            print('DSI.Phase.1 : prepare : begin')
+            print('DSI.Phase.1 : prep : begin')
 
         # Convert coordinates to rational.
         self.convert_coordinates_real_to_rat(denom)
@@ -1535,14 +1535,14 @@ class Mesh:
         z = m.add_zone('SINGLE ZONE')
 
         if is_log:
-            print('DSI.Phase.1 : prepare : end')
+            print('DSI.Phase.1 : prep : end')
 
         #
         # Second phase. Find triangles pairs and find all intersection points and segments.
         #
 
         if is_log:
-            print('DSI.Phase.2 : intsec : begin')
+            print('DSI.Phase.2 : isec : begin')
 
         # Process every triangles pair.
         for i in range(n):
@@ -1570,17 +1570,17 @@ class Mesh:
                     raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
                                     'not implemented')
 
-            print(f'DSI.Phase.2 : intsec : {i + 1} / {n}')
+            print(f'DSI.Phase.2 : isec : {i + 1} / {n}')
 
         if is_log:
-            print('DSI.Phase.2 : intsec : end')
+            print('DSI.Phase.2 : isec : end')
 
         #
         # Third phase. Triangulation and construct outer mesh.
         #
 
         if is_log:
-            print('DSI.Phase.3 : triang : begin')
+            print('DSI.Phase.3 : trng : begin')
 
         # Triangulate triangles.
         for i in range(n):
@@ -1593,10 +1593,10 @@ class Mesh:
                     if geom3d_rat.Vector.dot(t.outer_normal, st.outer_normal) < 0:
                         st.flip_normal()
                 m.add_triangles(z, small_triangles)
-            print(f'DSI.Phase.3 : triang : {i + 1} / {n}')
+            print(f'DSI.Phase.3 : trng : {i + 1} / {n}')
 
         if is_log:
-            print('DSI.Phase.3 : triang : end')
+            print('DSI.Phase.3 : trng : end')
 
         # Convert coordinates back to real.
         # We have to convert coordinates only for result mesh
@@ -1608,7 +1608,7 @@ class Mesh:
         #
 
         if is_log:
-            print('DST.Phase.4 : walkin : begin')
+            print('DST.Phase.4 : walk : begin')
 
         # Set all marks as -1.
         for f in m.faces:
@@ -1644,16 +1644,35 @@ class Mesh:
         m.delete_faces(lambda f: f.mark < 0)
 
         if is_log:
-            print('DST.Phase.4 : walkin : end')
+            print('DST.Phase.4 : walk : end')
+
+        #
+        # Fifth phase. End DSI.
+        #
+
+        if is_log:
+            print('DSI.Phase.5 : post : begin')
+
+        # Convert coordinates to real.
+        self.convert_coordinates_rat_to_real()
+
+        if is_log:
+            print('DSI.Phase.5 : post : end')
 
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
+    mesh_name = '../data/meshes/tetrahedron_double'
     start = time.time()
-    mesh = Mesh('../data/meshes/tetrahedron_double.dat')
-    mesh.print(True, True)
+    mesh = Mesh(f'{mesh_name}.dat')
+    #mesh.print(True, True)
+
+    # Delete self-intersections.
+    mesh.delete_self_intersections_rat(denom=1000, is_log=True)
+
+    mesh.store(f'{mesh_name}_out.dat')
     geom3d_rat.print_statistics()
     print(f'total time : {time.time() - start}')
 
