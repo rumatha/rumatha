@@ -2297,6 +2297,10 @@ class Triangle:
             C Point.
         """
 
+        if (A == B) or (B == C) or (A == C):
+            raise Exception('geom3d_rat:Triangle.__init__: create triangle from points, '
+                            f'which have duplicates ({A}, {B}, {C})')
+
         self.A = A
         self.B = B
         self.C = C

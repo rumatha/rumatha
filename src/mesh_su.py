@@ -1178,6 +1178,25 @@ class Mesh:
 
     #-----------------------------------------------------------------------------------------------
 
+    def fix_pseudo3d_profile_OZ(self, lo, hi):
+        """
+        Fix coordinates for pseudo3d profile.
+
+        Parameters
+        ----------
+        lo : float
+            Lo value of Z coordinate.
+        hi : float
+            Hi value of Z coordinate.
+        """
+
+        for node in self.nodes:
+            z = node.p[2]
+            dlo, dhi = abs(z - lo), abs(z - hi)
+            node.p[2] = lo if dlo < dhi else hi
+
+    #-----------------------------------------------------------------------------------------------
+
     def set_faces_variables(self, fv):
         """
         Delete all faces variables and set new (with values 0.0).
@@ -1664,15 +1683,15 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/tetrahedron_double'
+    mesh_name = '../data/meshes/cylinder/cylinder_int'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)
 
     # Delete self-intersections.
-    mesh.delete_self_intersections_rat(denom=1000, is_log=True)
+    m = mesh.delete_self_intersections_rat(denom=1000000, is_log=True)
 
-    mesh.store(f'{mesh_name}_out.dat')
+    m.store(f'{mesh_name}_out.dat')
     geom3d_rat.print_statistics()
     print(f'total time : {time.time() - start}')
 
