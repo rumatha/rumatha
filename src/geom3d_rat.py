@@ -239,7 +239,7 @@ class Point:
         Returns
         -------
         bool
-            True - it self < p,
+            True - if self < p,
             False - otherwise.
         """
 
@@ -281,7 +281,7 @@ class Point:
         # Ignore no size points.
         if size > 0:
 
-            #Ignore z coordinate.
+            # Ignore z coordinate.
             plt.scatter(self.x, self.y, color=color, s=size)
 
     #-----------------------------------------------------------------------------------------------
@@ -305,25 +305,25 @@ class Point:
 
     #-----------------------------------------------------------------------------------------------
 
-    def is_between(self, A, B):
+    def is_between(self, a, b):
         """
         Check if point is between two points.
 
         Parameters
         ----------
-        A : Point
+        a : Point
             Point.
-        B : Point
+        b : Point
             Point.
 
         Returns
         -------
         bool
-            True - if point is between A and B,
+            True - if point is between a and b,
             False - otherwise.
         """
 
-        return ((A <= self) and (self <= B)) or ((B <= self) and (self <= A))
+        return ((a <= self) and (self <= b)) or ((b <= self) and (self <= a))
 
     #-----------------------------------------------------------------------------------------------
 
@@ -775,10 +775,12 @@ class Line:
             p = p / n
             n = Fr(1)
         else:
-            assert p != 0
+            if p == 0:
+                raise Exception('geom3d_rat:Line.__init__: constructor from zero vector m, n, p.')
             p = Fr(1)
 
         # Normalize point.
+        # Normalization is needed for fast comparing of two lines.
         if m != 0:
             t = -x0 / m
             y0 = y0 + t * n
@@ -790,7 +792,6 @@ class Line:
             z0 = z0 + t * p
             y0 = Fr(0)
         else:
-            assert p != 0
             t = -z0 / p
             x0 = x0 + t * m
             y0 = y0 + t * n
@@ -918,20 +919,22 @@ class Line:
             False - otherwise.
         """
 
-        x, y, z = p.x, p.y, p.z
-        x0, y0, z0, m, n, p = self.P0.x, self.P0.y, self.P0.z, self.v.x, self.v.y, self.v.z
+        dx, dy, dz = p.x - self.P0.x, p.y - self.P0.y, p.z - self.P0.z
+        m, n, p = self.v.x, self.v.y, self.v.z
 
+        # Check (dx, dy, dz) codirected with (m, n, p)
+
+        # Find coefficient.
         if m != 0:
-            t = (x - x0) / m
-            return (y == y0 + t * n) and (z == z0 + t * p)
+            t = dx / m
         elif n != 0:
-            t = (y - y0) / n
-            return (x == x0 + t * m) and (z == z0 + t * p)
-        elif p != 0:
-            t = (z - z0) / p
-            return (x == x0 + t * m) and (y == y0 + t * n)
+            t = dy / n
         else:
-            assert False
+            if p == 0:
+                raise Exception('geom3d_rat:Line.is_have_point: incorrent line vector.')
+            t = dz / p
+
+        return (m * t == dx) and (n * t == dy) and (p * t == dz)
 
 #===================================================================================================
 
@@ -958,12 +961,13 @@ class Segment:
         """
 
         # Construction of zero length segment is forbidden.
-        assert A != B
+        if A == B:
+            raise Exception('geom3d_rat:Segment:__init__: construct segments of zero length.')
 
         self.A = A
         self.B = B
 
-        # Keep point in sorted way.
+        # Keep points in sorted way.
         self.sort_points()
 
         # Construct line for this segment.
@@ -990,9 +994,8 @@ class Segment:
             False - otherwise.
         """
 
-        # Actually we need only (self.A == s.A) and (self.B == s.B)
-        # since points are sorted.
-        return ((self.A == s.A) and (self.B == s.B)) or ((self.A == s.B) and (self.B == s.A))
+        # Points are sorted.
+        return (self.A == s.A) and (self.B == s.B)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1158,12 +1161,13 @@ class Segment:
         if self == s:
             return False
 
-        # Find intersection.
-        r = Intersection.segment_segment(self, s)
+        # Check for equal lines.
+        if self.line == s.line:
+            # Segments are adjacent if the second end of one segment is the first end of another.
+            return (self.B == s.A) or (s.B == self.A)
 
-        # Segments are adjacent if and only if they have one point of intersection
-        # and this point is end of both segments.
-        return isinstance(r, Point) and r.is_segment_end(self) and r.is_segment_end(s)
+        # Two segments of general placement are adjacent if they have common end.
+        return self.A.is_segment_end(s) or self.B.is_segment_end(s)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1185,25 +1189,15 @@ class Segment:
             False - otherwise.
         """
 
-        # Equal segments conflict.
-        if self == s:
-            return True
+        # Adjacent segments do not conflict.
+        if self.is_adjacent(s):
+            return False
 
         # Find intersection.
         r = Intersection.segment_segment(self, s)
 
         # No intersection - no conflict.
-        if r is None:
-            return False
-
-        # Intersection by segment.
-        if isinstance(r, Segment):
-            return True
-
-        # Intersection is point.
-        assert isinstance(r, Point)
-
-        return (not r.is_segment_end(self)) or (not r.is_segment_end(s))
+        return not (r is None)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -3775,6 +3769,15 @@ def test():
     # objects.
     XY = Line.from_points(X, Y)
     XYZ = Plane.from_points(X, Y, Z)
+
+    # Check compare points.
+    assert Point(Fr(1), Fr(0), Fr(0)) < Point(Fr(2), Fr(0), Fr(0))
+    assert Point(Fr(1), Fr(2), Fr(0)) > Point(Fr(1), Fr(1), Fr(0))
+    assert Point(Fr(0), Fr(0), Fr(4)) < Point(Fr(0), Fr(0), Fr(6))
+    assert Point(Fr(2), Fr(3), Fr(4)) == Point(Fr(2), Fr(3), Fr(4))
+
+    # Check line have points.
+    assert Line(Fr(0), Fr(0), Fr(0), Fr(1), Fr(1), Fr(1)).is_have_point(Point(Fr(2), Fr(2), Fr(2)))
 
     # Perpendicular planes.
     assert OXY.is_perpendicular_with_plane(OYZ)
