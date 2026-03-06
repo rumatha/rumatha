@@ -3734,6 +3734,17 @@ class Intersection:
 
 #===================================================================================================
 
+def print_statistics():
+    """
+    Print statistics.
+    """
+
+    print(f'geom3d_rat created objects: {Point.counter} points, '
+          f'{Line.counter} lines, {Segment.counter} segments, '
+          f'{Plane.counter} planes, {Triangle.counter} triangles')
+
+#===================================================================================================
+
 # Global objects.
 O = Point(Fr(0), Fr(0), Fr(0))
 X = Point(Fr(1), Fr(0), Fr(0))
@@ -4012,9 +4023,7 @@ if __name__ == '__main__':
     start = time.time()
     test()
     #test_triangulation(N=10)
-    print(f'created: {Point.counter} points, '
-          f'{Line.counter} lines, {Segment.counter} segments, '
-          f'{Plane.counter} planes, {Triangle.counter} triangles')
+    print_statistics()
     print(f'total time : {time.time() - start}')
 
 #===================================================================================================
