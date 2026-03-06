@@ -5,6 +5,7 @@ Mesh - Surface Unstructured.
 import numpy as np
 import geom3d_rat
 from fractions import Fraction as Fr
+import time
 
 #===================================================================================================
 
@@ -594,9 +595,9 @@ class Mesh:
         """
 
         print('[MESH]')
-        print(f'Nodes ({len(self.nodes)}):\n  ')#, self.nodes)
-        print(f'Edges ({len(self.edges)}):\n  ')#, self.edges)
-        print(f'Faces ({len(self.faces)}):\n  ')#, self.faces)
+        print(f'Nodes ({len(self.nodes)}):\n  ', self.nodes)
+        print(f'Edges ({len(self.edges)}):\n  ', self.edges)
+        print(f'Faces ({len(self.faces)}):\n  ', self.faces)
 
         if print_edges_with_incident_faces:
             print('[EDGES WITH INCIDENT FACES]')
@@ -1650,7 +1651,10 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
+    start = time.time()
     mesh = Mesh('../data/meshes/tetrahedron_double.dat')
     mesh.print(True, True)
+    geom3d_rat.print_statistics()
+    print(f'total time : {time.time() - start}')
 
 # ==================================================================================================
