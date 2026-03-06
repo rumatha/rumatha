@@ -3,6 +3,7 @@ Mesh - Surface Unstructured.
 """
 
 import numpy as np
+import geom3d
 import geom3d_rat
 from fractions import Fraction as Fr
 import time
@@ -1534,12 +1535,14 @@ class Mesh:
             Result mesh.
         """
 
-        #
+        ph0t = time.time()
+
+        #-------------------------------------------------------
         # First phase. Prepare mesh.
-        #
+        #-------------------------------------------------------
 
         if is_log:
-            print('DSI.Phase.1 : prep : begin')
+            print('DSI.Phase.1: prep: begin')
 
         # Convert coordinates to rational.
         self.convert_coordinates_real_to_rat(denom)
@@ -1554,14 +1557,16 @@ class Mesh:
         z = m.add_zone('SINGLE ZONE')
 
         if is_log:
-            print('DSI.Phase.1 : prep : end')
+            print('DSI.Phase.1: prep: end')
 
-        #
+        ph1t = time.time()
+
+        #-------------------------------------------------------
         # Second phase. Find triangles pairs and find all intersection points and segments.
-        #
+        #-------------------------------------------------------
 
         if is_log:
-            print('DSI.Phase.2 : isec : begin')
+            print('DSI.Phase.2: isec: begin')
 
         # Process every triangles pair.
         for i in range(n):
@@ -1589,17 +1594,19 @@ class Mesh:
                     raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
                                     'not implemented')
 
-            print(f'DSI.Phase.2 : isec : {i + 1} / {n}')
+            print(f'DSI.Phase.2: isec: {i + 1} / {n}')
 
         if is_log:
-            print('DSI.Phase.2 : isec : end')
+            print('DSI.Phase.2: isec: end')
 
-        #
+        ph2t = time.time()
+
+        #-------------------------------------------------------
         # Third phase. Triangulation and construct outer mesh.
-        #
+        #-------------------------------------------------------
 
         if is_log:
-            print('DSI.Phase.3 : trng : begin')
+            print('DSI.Phase.3: trng: begin')
 
         # Triangulate triangles.
         for i in range(n):
@@ -1612,22 +1619,24 @@ class Mesh:
                     if geom3d_rat.Vector.dot(t.outer_normal, st.outer_normal) < 0:
                         st.flip_normal()
                 m.add_triangles(z, small_triangles)
-            print(f'DSI.Phase.3 : trng : {i + 1} / {n}')
-
-        if is_log:
-            print('DSI.Phase.3 : trng : end')
+            print(f'DSI.Phase.3: trng: {i + 1} / {n}')
 
         # Convert coordinates back to real.
         # We have to convert coordinates only for result mesh
         # because self mesh now is not valid and can not be used.
         m.convert_coordinates_rat_to_real()
 
-        #
+        if is_log:
+            print('DSI.Phase.3: trng: end')
+
+        ph3t = time.time()
+
+        #-------------------------------------------------------
         # Fourth phase. Walk outer surface of the mesh.
-        #
+        #-------------------------------------------------------
 
         if is_log:
-            print('DST.Phase.4 : walk : begin')
+            print('DST.Phase.4: walk: begin')
 
         # Set all marks as -1.
         for f in m.faces:
@@ -1653,7 +1662,7 @@ class Mesh:
                     i = np.argmax([fn @ (f.third_node(e).p - mp) for f in e.faces])
                     nf = e.faces[i]
                 else:
-                    raise Exception('Mesh.delete_self_intersections_rat : edge with '
+                    raise Exception('geom3d_rat:Mesh.delete_self_intersections_rat: edge with '
                                     f'unexpected number of incident faces ({faces_count}) is found')
                 if not nf is None:
                     if nf.mark < 0:
@@ -1663,27 +1672,37 @@ class Mesh:
         m.delete_faces(lambda f: f.mark < 0)
 
         if is_log:
-            print('DST.Phase.4 : walk : end')
+            print('DST.Phase.4: walk: end')
 
-        #
+        ph4t = time.time()
+
+        #-------------------------------------------------------
         # Fifth phase. End DSI.
-        #
+        #-------------------------------------------------------
 
         if is_log:
-            print('DSI.Phase.5 : post : begin')
+            print('DSI.Phase.5: post: begin')
 
         # Convert coordinates to real.
         self.convert_coordinates_rat_to_real()
 
         if is_log:
-            print('DSI.Phase.5 : post : end')
+            print('DSI.Phase.5: post: end')
+
+        ph5t = time.time()
+
+        #-------------------------------------------------------
+
+        if is_log:
+            print(f'DSI: ph1 {ph1t - ph0t}, ph2 {ph2t - ph1t}, ph3 {ph3t - ph2t}, '
+                  f'ph4 {ph4t - ph3t}, ph5 {ph5t - ph4t}')
 
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/tu/tu3_038_int'
+    mesh_name = '../data/meshes/bunny_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)

@@ -23,7 +23,8 @@ class Segment:
             Hi value.
         """
 
-        assert lo <= hi
+        if lo > hi:
+            raise Exception('geom1d:Segment.__init__: unable to create segment with lo > hi.')
 
         self.lo = lo
         self.hi = hi

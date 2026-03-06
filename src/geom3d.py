@@ -50,6 +50,8 @@ class Point:
             Constructed point.
         """
 
+        return Point(ar[0], ar[1], ar[2])
+
     #-----------------------------------------------------------------------------------------------
 
     def __sub__(self, p):
@@ -122,33 +124,6 @@ class Vector(Point):
 
 #===================================================================================================
 
-class Triangle:
-    """
-    Triangle.
-    """
-
-    #-----------------------------------------------------------------------------------------------
-
-    def __init__(self, A, B, C):
-        """
-        Constructor from points.
-
-        Parameters
-        ----------
-        A : Point
-            A point.
-        B : Point
-            B point.
-        C : Point
-            C Point.
-        """
-
-        self.A = A
-        self.B = B
-        self.C = C
-
-#===================================================================================================
-
 class Box:
     """
     Box.
@@ -179,28 +154,6 @@ class Box:
         self.sx = geom1d.Segment(xlo, xhi)
         self.sy = geom1d.Segment(ylo, yhi)
         self.sz = geom1d.Segment(zlo, zhi)
-
-    #-----------------------------------------------------------------------------------------------
-
-    @staticmethod
-    def from_triangle(t):
-        """
-        Construct box from triangle.
-
-        Parameters
-        ----------
-        t : Triangle
-            Triangle.
-
-        Returns
-        -------
-        Box
-            Constructed box.
-        """
-
-        return Box(min([t.A.x, t.B.x, t.C.x]), max([t.A.x, t.B.x, t.C.x]),
-                   min([t.A.y, t.B.y, t.C.y]), max([t.A.y, t.B.y, t.C.y]),
-                   min([t.A.z, t.B.z, t.C.z]), max([t.A.z, t.B.z, t.C.z]))
 
 #===================================================================================================
 
