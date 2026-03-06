@@ -305,28 +305,6 @@ class Point:
 
     #-----------------------------------------------------------------------------------------------
 
-    def is_between(self, a, b):
-        """
-        Check if point is between two points.
-
-        Parameters
-        ----------
-        a : Point
-            Point.
-        b : Point
-            Point.
-
-        Returns
-        -------
-        bool
-            True - if point is between a and b,
-            False - otherwise.
-        """
-
-        return ((a <= self) and (self <= b)) or ((b <= self) and (self <= a))
-
-    #-----------------------------------------------------------------------------------------------
-
     def is_segment_end(self, s):
         """
         Check if point is end of segment.
@@ -1121,6 +1099,26 @@ class Segment:
 
     #-----------------------------------------------------------------------------------------------
 
+    def is_point_between_ends(self, p):
+        """
+        Check if point is between ends.
+
+        Parameters
+        ----------
+        p : Point
+            Point.
+
+        Returns
+        -------
+        bool
+            True - if point is between ends.
+            False - otherwise.
+        """
+
+        return (self.A <= p) and (p <= self.B)
+
+    #-----------------------------------------------------------------------------------------------
+
     def is_have_point(self, p):
         """
         Check if segment has point.
@@ -1137,7 +1135,7 @@ class Segment:
             False - otherwise.
         """
 
-        return self.line.is_have_point(p) and p.is_between(self.A, self.B)
+        return self.line.is_have_point(p) and self.is_point_between_ends(p)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -3265,7 +3263,7 @@ class Intersection:
         # So we have to check point for between ends check.
         if isinstance(r, Point):
             p = r
-            if p.is_between(s1.A, s1.B) and p.is_between(s2.A, s2.B):
+            if s1.is_point_between_ends(p) and s2.is_point_between_ends(p):
                 return p
             else:
                 return None
