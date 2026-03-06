@@ -29,6 +29,48 @@ class Segment:
         self.lo = lo
         self.hi = hi
 
+    #-----------------------------------------------------------------------------------------------
+
+    def __repr__(self):
+        """
+        String representation.
+
+        Returns
+        -------
+        str
+            String representation.
+        """
+
+        return f'[{self.lo} - {self.hi}]'
+
+    #-----------------------------------------------------------------------------------------------
+
+    def mid(self):
+        """
+        Middle value.
+
+        Returns
+        -------
+        float
+            Middle value.
+        """
+
+        return 0.5 * (self.lo + self.hi)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def split(self):
+        """
+        Split segment.
+
+        Returns
+        -------
+        (Segment, Segment)
+            Pair of segments.
+        """
+
+        return Segment(self.lo, self.mid()), Segment(self.mid(), self.hi)
+
 #===================================================================================================
 
 if __name__ == '__main__':

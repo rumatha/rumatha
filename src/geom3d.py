@@ -131,16 +131,40 @@ class Box:
 
     #-----------------------------------------------------------------------------------------------
 
-    def __init__(self, xlo, xhi, ylo, yhi, zlo, zhi):
+    def __init__(self, sx, sy, sz, eps):
         """
         Constructor.
+
+        Parameters
+        ----------
+        sx : geom1d.Segment
+            X segment.
+        sy : geom1d.Segment
+            Y segment.
+        sz : geom1d.Segment
+            Z segment.
+        eps : float
+            Epsilon.
+        """
+
+        self.sx = sx
+        self.sy = sy
+        self.sz = sz
+        self.eps = eps
+
+    #-----------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def from_floats(xlo, xhi, ylo, yhi, zlo, zhi, eps):
+        """
+        Create from floats.
 
         Parameters
         ----------
         xlo : float
             X lo value.
         xhi : float
-            X hi value.
+            Y hi value.
         ylo : float
             Y lo value.
         yhi : float
@@ -149,11 +173,61 @@ class Box:
             Z lo value.
         zhi : float
             Z hi value.
+        eps : float
+            Epsilon.
+
+        Returns
+        -------
+        Box
+            Created box.
         """
 
-        self.sx = geom1d.Segment(xlo, xhi)
-        self.sy = geom1d.Segment(ylo, yhi)
-        self.sz = geom1d.Segment(zlo, zhi)
+        return Box(geom1d.Segment(xlo, xhi),
+                   geom1d.Segment(ylo, yhi),
+                   geom1d.Segment(zlo, zhi), eps)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __repr__(self):
+        """
+        String representation.
+
+        Returns
+        -------
+        str
+            String representation.
+        """
+
+        return f'[{self.sx} x {self.sy} x {self.sz}, eps {self.eps}]'
+
+    #-----------------------------------------------------------------------------------------------
+
+    def split(self, d):
+        """
+        Split box into two boxes.
+
+        Parameters
+        ----------
+        d : str
+            Direction ('x', 'y', 'z').
+
+        Returns
+        -------
+        (Box, Box)
+            Pair of boxes.
+        """
+
+        if d == 'x':
+            sx1, sx2 = self.sx.split()
+            return Box(sx1, self.sy, self.sz, self.eps), Box(sx2, self.sy, self.sz, self.eps)
+        elif d == 'y':
+            sy1, sy2 = self.sy.split()
+            return Box(self.sx, sy1, self.sz, self.eps), Box(self.sx, sy2, self.sz, self.eps)
+        else:
+            if d != 'z':
+                raise Exception(f'geom3d:Box.split: wrong direction of split ({d}).')
+            sz1, sz2 = self.sz.split()
+            return Box(self.sx, self.sy, sz1, self.eps), Box(self.sx, self.sy, sz2, self.eps)
 
 #===================================================================================================
 
