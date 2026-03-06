@@ -6,6 +6,7 @@ import numpy as np
 from fractions import Fraction as Fr
 import geom2d_rat
 import matplotlib.pyplot as plt
+import time
 
 #===================================================================================================
 
@@ -13,6 +14,9 @@ class Point:
     """
     Point with three coordinates.
     """
+
+    # Count of points created.
+    counter = 0
 
     #-----------------------------------------------------------------------------------------------
 
@@ -29,6 +33,9 @@ class Point:
         z : Fraction
             z-coordinate.
         """
+
+        # Increment counter.
+        Point.counter = Point.counter + 1
 
         self.x = x
         self.y = y
@@ -730,6 +737,9 @@ class Line:
     Line in space.
     """
 
+    # Counter for created lines.
+    counter = 0
+
     #-----------------------------------------------------------------------------------------------
 
     def __init__(self, x0, y0, z0, m, n, p):
@@ -788,6 +798,9 @@ class Line:
 
         self.P0 = Point(x0, y0, z0)
         self.v = Vector(m, n, p)
+
+        # Increment counter.
+        Line.counter = Line.counter + 1
 
     #-----------------------------------------------------------------------------------------------
 
@@ -927,6 +940,9 @@ class Segment:
     Segment in space.
     """
 
+    # Counter for created segments.
+    counter = 0
+
     #-----------------------------------------------------------------------------------------------
 
     def __init__(self, A, B):
@@ -952,6 +968,9 @@ class Segment:
 
         # Construct line for this segment.
         self.line = Line.from_points(self.A, self.B)
+
+        # Increment counter.
+        Segment.counter = Segment.counter + 1
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1987,6 +2006,9 @@ class Plane:
     Plane.
     """
 
+    # Counter of created planes.
+    counter = 0
+
     #-----------------------------------------------------------------------------------------------
 
     def __init__(self, a, b, c, d):
@@ -2012,6 +2034,9 @@ class Plane:
 
         # Construct normal.
         self.normal = Vector(self.a, self.b, self.c)
+
+        # Increment counter.
+        Plane.counter = Plane.counter + 1
 
     #-----------------------------------------------------------------------------------------------
 
@@ -2261,6 +2286,9 @@ class Triangle:
     Triangle in space.
     """
 
+    # Counter for created triangles.
+    counter = 0
+
     #-----------------------------------------------------------------------------------------------
 
     def __init__(self, A, B, C):
@@ -2293,6 +2321,9 @@ class Triangle:
 
         # Construct outer normal for triangle.
         self.outer_normal = Vector.vector_product(self.B - self.A, self.C - self.A)
+
+        # Increment counter.
+        Triangle.counter = Triangle.counter + 1
 
     #-----------------------------------------------------------------------------------------------
 
@@ -3978,7 +4009,12 @@ def test_triangulation(N):
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    start = time.time()
     test()
-    test_triangulation(N=10)
+    #test_triangulation(N=10)
+    print(f'created: {Point.counter} points, '
+          f'{Line.counter} lines, {Segment.counter} segments, '
+          f'{Plane.counter} planes, {Triangle.counter} triangles')
+    print(f'total time : {time.time() - start}')
 
 #===================================================================================================
