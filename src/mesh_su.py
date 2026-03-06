@@ -5,6 +5,7 @@ Mesh - Surface Unstructured.
 import numpy as np
 import geom3d
 import geom3d_rat
+import bvh_tree
 from fractions import Fraction as Fr
 import time
 
@@ -1548,9 +1549,13 @@ class Mesh:
         self.convert_coordinates_real_to_rat(denom)
 
         # Create collection of triangles and set of intersection points and segments.
-        tis = [(geom3d_rat.Triangle(f.nodes[0].p, f.nodes[1].p, f.nodes[2].p),
-                geom3d_rat.PointsAndSegments()) for f in self.faces]
-        n = len(tis)
+        ts = [geom3d_rat.Triangle(f.nodes[0].p, f.nodes[1].p, f.nodes[2].p) for f in self.faces]
+        n = len(ts)
+        qs = [geom3d_rat.PointsAndSegments() for _ in range(n)]
+
+        # Create BVH tree.
+        bvh = geom3d_rat.rat_triangles_bvh_tree(ts)
+        bvh.print()
 
         # Create result mesh with single zone.
         m = Mesh()
@@ -1570,9 +1575,9 @@ class Mesh:
 
         # Process every triangles pair.
         for i in range(n):
-            (t1, intsec1) = tis[i]
+            t1, q1 = ts[i], qs[i]
             for j in range(i + 1, n):
-                (t2, intsec2) = tis[j]
+                t2, q2 = ts[j], qs[j]
 
                 # Find intersection.
                 r = geom3d_rat.Intersection.triangle_triangle(t1, t2)
@@ -1582,14 +1587,14 @@ class Mesh:
                     pass
                 elif isinstance(r, geom3d_rat.Point):
                     if not r.is_triangle_vertex(t1):
-                        intsec1.add_unique_point(r)
+                        q1.add_unique_point(r)
                     if not r.is_triangle_vertex(t2):
-                        intsec2.add_unique_point(r)
+                        q2.add_unique_point(r)
                 elif isinstance(r, geom3d_rat.Segment):
                     if not r.is_triangle_side(t1):
-                        intsec1.add_unique_segment(r)
+                        q1.add_unique_segment(r)
                     if not r.is_triangle_side(t2):
-                        intsec2.add_unique_segment(r)
+                        q2.add_unique_segment(r)
                 else:
                     raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
                                     'not implemented')
@@ -1609,16 +1614,21 @@ class Mesh:
             print('DSI.Phase.3: trng: begin')
 
         # Triangulate triangles.
+        triangulated_count = 0
         for i in range(n):
-            (t, intsec) = tis[i]
-            if intsec.is_empty():
+            t, q = ts[i], qs[i]
+            if q.is_empty():
                 m.add_triangle(z, t)
             else:
-                small_triangles = t.triangulate(intsec)
+                small_triangles = t.triangulate(q)
+                if small_triangles.count() == 1:
+                    raise Exception('mesh_su:Mesh.delete_self_intersections_rat: '
+                                    'trivial triangulation.')
                 for st in small_triangles:
                     if geom3d_rat.Vector.dot(t.outer_normal, st.outer_normal) < 0:
                         st.flip_normal()
                 m.add_triangles(z, small_triangles)
+                triangulated_count = triangulated_count + 1
             print(f'DSI.Phase.3: trng: {i + 1} / {n}')
 
         # Convert coordinates back to real.
@@ -1627,6 +1637,8 @@ class Mesh:
         m.convert_coordinates_rat_to_real()
 
         if is_log:
+            print(f'DSI.Phase.3: {triangulated_count} ({triangulated_count / n * 100}%) '
+                  'triangles triangulated')
             print('DSI.Phase.3: trng: end')
 
         ph3t = time.time()
@@ -1694,15 +1706,15 @@ class Mesh:
         #-------------------------------------------------------
 
         if is_log:
-            print(f'DSI: ph1 {ph1t - ph0t}, ph2 {ph2t - ph1t}, ph3 {ph3t - ph2t}, '
-                  f'ph4 {ph4t - ph3t}, ph5 {ph5t - ph4t}')
+            print(f'DSI: ph1 {(ph1t - ph0t):.4}, ph2 {(ph2t - ph1t):.4}, ph3 {(ph3t - ph2t):.4}, '
+                  f'ph4 {(ph4t - ph3t):.4}, ph5 {(ph5t - ph4t):.4}')
 
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/bunny_double'
+    mesh_name = '../data/meshes/small_sphere_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)
@@ -1712,6 +1724,6 @@ if __name__ == '__main__':
 
     m.store(f'{mesh_name}_out.dat')
     geom3d_rat.print_statistics()
-    print(f'total time : {time.time() - start}')
+    print(f'total time : {(time.time() - start):.4}')
 
 # ==================================================================================================

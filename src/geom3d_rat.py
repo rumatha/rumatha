@@ -5,6 +5,7 @@
 import numpy as np
 from fractions import Fraction as Fr
 import geom2d_rat
+import bvh_tree
 import matplotlib.pyplot as plt
 import time
 
@@ -3751,6 +3752,178 @@ OXZ = Plane.from_points(O, X, Z)
 #===================================================================================================
 # Global functions.
 #===================================================================================================
+
+def split_triangles_list(ts, d, v):
+    """
+    Split triangles list into two.
+
+    Parameters
+    ----------
+    ts : [(Triangle, int)]
+        List of pairs - triangle / index.
+    d : str
+        Direction ('x', 'y', 'z').
+    v : float
+        Split value.
+
+    Returns
+    -------
+    [(Triangle, int)], [(Triangle, int)]
+        Splitted structure.
+    """
+
+    lo, hi = [], []
+
+    def anylo(v1, v2, v3, v):
+        return not ((v1 > v) and (v2 > v) and (v3 > v))
+
+    def anyhi(v1, v2, v3, v):
+        return not ((v1 < v) and (v2 < v) and (v3 < v))
+
+    if d == 'x':
+        for (t, i) in ts:
+            v1, v2, v3 = t.A.x, t.B.x, t.C.x
+            if anylo(v1, v2, v3, v):
+                lo.append((t, i))
+            if anyhi(v1, v2, v3, v):
+                hi.append((t, i))
+    elif d == 'y':
+        for (t, i) in ts:
+            v1, v2, v3 = t.A.y, t.B.y, t.C.y
+            if anylo(v1, v2, v3, v):
+                lo.append((t, i))
+            if anyhi(v1, v2, v3, v):
+                hi.append((t, i))
+    else:
+        if d != 'z':
+            raise Exception('geom3d_rat:split_triangles_Liist: wrong split direction.')
+        for (t, i) in ts:
+            v1, v2, v3 = t.A.z, t.B.z, t.C.z
+            if anylo(v1, v2, v3, v):
+                lo.append((t, i))
+            if anyhi(v1, v2, v3, v):
+                hi.append((t, i))
+
+    return lo, hi
+
+#---------------------------------------------------------------------------------------------------
+
+def best_split_triangles_list(ts, vx, vy, vz):
+    """
+    Check best split.
+
+    Parameters
+    ----------
+    ts : [(Triangle, int)]
+        List of pairs - triangle / index.
+    vx : float
+        Value for X split.
+    vy : float
+        Value for Y split.
+    vz : float
+        Value for Z split.
+
+    Returns
+    -------
+    (str, (Triangle, int), (Triangle, int)) | None
+        Splitted structure with direction,
+        or None - if split is not possible.
+    """
+
+    xlo, xhi = split_triangles_list(ts, 'x', vx)
+    ylo, yhi = split_triangles_list(ts, 'y', vy)
+    zlo, zhi = split_triangles_list(ts, 'z', vz)
+    n = len(ts)
+    xlon, xhin = len(xlo), len(xhi)
+    ylon, yhin = len(ylo), len(yhi)
+    zlon, zhin = len(zlo), len(zhi)
+    dx, dy, dz = xlon + xhin - n, ylon + yhin - n, zlon + zhin - n
+
+    def is_valid_sec(lo, hi, n):
+        return (lo != 0) and (lo != n) and (hi != 0) and (hi != n)
+
+    if (dx <= dy) and (dx <= dz) and is_valid_sec(xlon, xhin, n):
+        # x - is the best
+        return 'x', xlo, xhi
+    elif (dy <= dz) and is_valid_sec(ylon, yhin, n):
+        # y - is the best
+        return 'y', ylo, yhi
+    elif is_valid_sec(zlon, zhin, n):
+        return 'z', zlo, zhi
+    else:
+        return None
+
+#---------------------------------------------------------------------------------------------------
+
+def split_bvh_tree_with_rat_triangles(bvh):
+    """
+    Split BVH tree with rat triangles.
+
+    Parameters
+    ----------
+    bvh : bvh_tree.BVHTRee
+        Tree.
+    """
+
+    if bvh.children:
+        raise Exception('geom3d_rat.split_bvh_tree_with_rat_triangles: '
+                        'can not split BVH tree with children.')
+
+    [vx, vy, vz] = bvh.box.mids()
+    bs = best_split_triangles_list(bvh.data, vx, vy, vz)
+
+    if bs is None:
+        return
+
+    d, lo, hi = bs
+    bvh.split(d)
+    bvh.children[0].data = lo
+    bvh.children[1].data = hi
+
+    # Recursive split.
+    split_bvh_tree_with_rat_triangles(bvh.children[0])
+    split_bvh_tree_with_rat_triangles(bvh.children[1])
+
+#---------------------------------------------------------------------------------------------------
+
+def rat_triangles_bvh_tree(ts):
+    """
+    Create rat triangles BVH tree.
+
+    Parameters
+    ----------
+    ts : [Triangle()]
+        List of triangles.
+
+    Returns
+    -------
+    bvh_tree.BVHTRee
+        BVH tree.
+    """
+
+    # Count bounds
+    xlo, xhi, ylo, yhi, zlo, zhi = (float('inf'), float('-inf'),
+                                    float('inf'), float('-inf'),
+                                    float('inf'), float('-inf'))
+    for t in ts:
+        xlo = min(xlo, min([t.A.x, t.B.x, t.C.x]))
+        xhi = max(xhi, max([t.A.x, t.B.x, t.C.x]))
+        ylo = min(ylo, min([t.A.y, t.B.y, t.C.y]))
+        yhi = max(yhi, max([t.A.y, t.B.y, t.C.y]))
+        zlo = min(zlo, min([t.A.z, t.B.z, t.C.z]))
+        zhi = max(zhi, max([t.A.z, t.B.z, t.C.z]))
+
+    # Wrap triangles.
+    tss = [(ts[i], i) for i in range(len(ts))]
+
+    # Create root of BVH.
+    bvh = bvh_tree.BVHTree.from_floats(xlo, xhi, ylo, yhi, zlo, zhi, 0.0)
+    bvh.data = tss
+    split_bvh_tree_with_rat_triangles(bvh)
+
+    return bvh
+
+#---------------------------------------------------------------------------------------------------
 
 def print_statistics():
     """

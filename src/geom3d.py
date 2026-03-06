@@ -202,6 +202,20 @@ class Box:
 
     #-----------------------------------------------------------------------------------------------
 
+    def mids(self):
+        """
+        Get mid values.
+
+        Returns
+        -------
+        [float, float, float]
+            Mids.
+        """
+
+        return [self.sx.mid(), self.sy.mid(), self.sz.mid()]
+
+    #-----------------------------------------------------------------------------------------------
+
     def split(self, d):
         """
         Split box into two boxes.
