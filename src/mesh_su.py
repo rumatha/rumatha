@@ -1683,7 +1683,7 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/cylinder/cylinder_int'
+    mesh_name = '../data/meshes/tu/tu3_038_int'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)
