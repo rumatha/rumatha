@@ -3772,39 +3772,39 @@ def split_triangles_list(ts, d, v):
         Splitted structure.
     """
 
-    lo, hi = [], []
+    ts_lo, ts_hi = [], []
 
-    def anylo(v1, v2, v3, v):
-        return not ((v1 > v) and (v2 > v) and (v3 > v))
+    def anyloeq(v1, v2, v3, v):
+        return (v1 <= v) or (v2 <= v) or (v3 <= v)
 
-    def anyhi(v1, v2, v3, v):
-        return not ((v1 < v) and (v2 < v) and (v3 < v))
+    def anyhieq(v1, v2, v3, v):
+        return (v1 >= v) or (v2 >= v) or (v3 >= v)
 
     if d == 'x':
         for (t, i) in ts:
             v1, v2, v3 = t.A.x, t.B.x, t.C.x
-            if anylo(v1, v2, v3, v):
-                lo.append((t, i))
-            if anyhi(v1, v2, v3, v):
-                hi.append((t, i))
+            if anyloeq(v1, v2, v3, v):
+                ts_lo.append((t, i))
+            if anyhieq(v1, v2, v3, v):
+                ts_hi.append((t, i))
     elif d == 'y':
         for (t, i) in ts:
             v1, v2, v3 = t.A.y, t.B.y, t.C.y
-            if anylo(v1, v2, v3, v):
-                lo.append((t, i))
-            if anyhi(v1, v2, v3, v):
-                hi.append((t, i))
+            if anyloeq(v1, v2, v3, v):
+                ts_lo.append((t, i))
+            if anyhieq(v1, v2, v3, v):
+                ts_hi.append((t, i))
     else:
         if d != 'z':
             raise Exception('geom3d_rat:split_triangles_Liist: wrong split direction.')
         for (t, i) in ts:
             v1, v2, v3 = t.A.z, t.B.z, t.C.z
-            if anylo(v1, v2, v3, v):
-                lo.append((t, i))
-            if anyhi(v1, v2, v3, v):
-                hi.append((t, i))
+            if anyloeq(v1, v2, v3, v):
+                ts_lo.append((t, i))
+            if anyhieq(v1, v2, v3, v):
+                ts_hi.append((t, i))
 
-    return lo, hi
+    return ts_lo, ts_hi
 
 #---------------------------------------------------------------------------------------------------
 
@@ -3830,26 +3830,26 @@ def best_split_triangles_list(ts, vx, vy, vz):
         or None - if split is not possible.
     """
 
-    xlo, xhi = split_triangles_list(ts, 'x', vx)
-    ylo, yhi = split_triangles_list(ts, 'y', vy)
-    zlo, zhi = split_triangles_list(ts, 'z', vz)
+    ts_xlo, ts_xhi = split_triangles_list(ts, 'x', vx)
+    ts_ylo, ts_yhi = split_triangles_list(ts, 'y', vy)
+    ts_zlo, ts_zhi = split_triangles_list(ts, 'z', vz)
     n = len(ts)
-    xlon, xhin = len(xlo), len(xhi)
-    ylon, yhin = len(ylo), len(yhi)
-    zlon, zhin = len(zlo), len(zhi)
-    dx, dy, dz = xlon + xhin - n, ylon + yhin - n, zlon + zhin - n
+    ts_xlon, ts_xhin = len(ts_xlo), len(ts_xhi)
+    ts_ylon, ts_yhin = len(ts_ylo), len(ts_yhi)
+    ts_zlon, ts_zhin = len(ts_zlo), len(ts_zhi)
+    dx, dy, dz = ts_xlon + ts_xhin - n, ts_ylon + ts_yhin - n, ts_zlon + ts_zhin - n
 
     def is_valid_sec(lo, hi, n):
         return (lo != 0) and (lo != n) and (hi != 0) and (hi != n)
 
-    if (dx <= dy) and (dx <= dz) and is_valid_sec(xlon, xhin, n):
+    if (dx <= dy) and (dx <= dz) and is_valid_sec(ts_xlon, ts_xhin, n):
         # x - is the best
-        return 'x', xlo, xhi
-    elif (dy <= dz) and is_valid_sec(ylon, yhin, n):
+        return 'x', ts_xlo, ts_xhi
+    elif (dy <= dz) and is_valid_sec(ts_ylon, ts_yhin, n):
         # y - is the best
-        return 'y', ylo, yhi
-    elif is_valid_sec(zlon, zhin, n):
-        return 'z', zlo, zhi
+        return 'y', ts_ylo, ts_yhi
+    elif is_valid_sec(ts_zlon, ts_zhin, n):
+        return 'z', ts_zlo, ts_zhi
     else:
         return None
 
