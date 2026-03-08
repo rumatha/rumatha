@@ -4,6 +4,8 @@
 
 import numpy as np
 from fractions import Fraction as Fr
+import geom1d
+import geom3d
 import geom2d_rat
 import bvh_tree
 import matplotlib.pyplot as plt
@@ -3753,6 +3755,39 @@ OXZ = Plane.from_points(O, X, Z)
 # Global functions.
 #===================================================================================================
 
+def triangles_list_box(ts, eps):
+    """
+    Box of triangles list.
+
+    Parameters
+    ----------
+    ts : [Triangle]
+        List of triangles.
+    eps : float
+        Epsilon.
+
+    Returns
+    -------
+    geom3d.Box
+        Box.
+    """
+
+    lo, hi = float('inf'), float('-inf')
+    xlo, xhi, ylo, yhi, zlo, zhi = lo, hi, lo, hi, lo, hi
+
+    # Check all triangles.
+    for t in ts:
+        ps = t.points
+        xlo, xhi = min(xlo, min([p.x for p in ps])), max(xhi, max([p.x for p in ps]))
+        ylo, yhi = min(ylo, min([p.y for p in ps])), max(yhi, max([p.y for p in ps]))
+        zlo, zhi = min(zlo, min([p.z for p in ps])), max(zhi, max([p.z for p in ps]))
+
+    return geom3d.Box(geom1d.Segment(float(xlo), float(xhi)),
+                      geom1d.Segment(float(ylo), float(yhi)),
+                      geom1d.Segment(float(zlo), float(zhi)), eps)
+
+#---------------------------------------------------------------------------------------------------
+
 def split_triangles_list(ts, d, v):
     """
     Split triangles list into two.
@@ -3901,23 +3936,11 @@ def rat_triangles_bvh_tree(ts):
         BVH tree.
     """
 
-    # Count bounds
-    xlo, xhi, ylo, yhi, zlo, zhi = (float('inf'), float('-inf'),
-                                    float('inf'), float('-inf'),
-                                    float('inf'), float('-inf'))
-    for t in ts:
-        xlo = min(xlo, min([t.A.x, t.B.x, t.C.x]))
-        xhi = max(xhi, max([t.A.x, t.B.x, t.C.x]))
-        ylo = min(ylo, min([t.A.y, t.B.y, t.C.y]))
-        yhi = max(yhi, max([t.A.y, t.B.y, t.C.y]))
-        zlo = min(zlo, min([t.A.z, t.B.z, t.C.z]))
-        zhi = max(zhi, max([t.A.z, t.B.z, t.C.z]))
-
     # Wrap triangles.
     tss = [(ts[i], i) for i in range(len(ts))]
 
     # Create root of BVH.
-    bvh = bvh_tree.BVHTree.from_floats(xlo, xhi, ylo, yhi, zlo, zhi, 0.0)
+    bvh = bvh_tree.BVHTree(triangles_list_box(ts, 0.0))
     bvh.data = tss
     split_bvh_tree_with_rat_triangles(bvh)
 

@@ -31,6 +31,21 @@ class Segment:
 
     #-----------------------------------------------------------------------------------------------
 
+    @staticmethod
+    def whole():
+        """
+        Return segment of whole line.
+
+        Returns
+        -------
+        Segment
+            Segment [-inf, inf].
+        """
+
+        return Segment(float('-inf'), float('inf'))
+
+    #-----------------------------------------------------------------------------------------------
+
     def __repr__(self):
         """
         String representation.
