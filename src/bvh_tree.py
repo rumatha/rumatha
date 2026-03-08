@@ -55,6 +55,10 @@ class BVHTree:
             Created tree.
         """
 
+        # Convert bounds to floats.
+        xlo, xhi, ylo, yhi, zlo, zhi = float(xlo), float(xhi), \
+                                       float(ylo), float(yhi), float(zlo), float(zhi)
+
         box = geom3d.Box.from_floats(xlo, xhi, ylo, yhi, zlo, zhi, eps)
 
         return BVHTree(box)
