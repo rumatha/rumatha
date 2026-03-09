@@ -3755,7 +3755,7 @@ OXZ = Plane.from_points(O, X, Z)
 # Global functions.
 #===================================================================================================
 
-def triangles_list_box(ts, eps):
+def triangles_list_box(ts, eps=0.0):
     """
     Box of triangles list.
 
@@ -3785,6 +3785,25 @@ def triangles_list_box(ts, eps):
     return geom3d.Box(geom1d.Segment(float(xlo), float(xhi)),
                       geom1d.Segment(float(ylo), float(yhi)),
                       geom1d.Segment(float(zlo), float(zhi)), eps)
+
+#---------------------------------------------------------------------------------------------------
+
+def init_bvh_tree_with_triangles_list(bvh, ts, eps=0.0):
+    """
+    Init BVH-tree with triangles list.
+
+    Parameters
+    ----------
+    bvh : bvh_tree.BVHTree
+        Tree.
+    ts : [Triangle]
+        Triangles list.
+    eps : float
+        Epsilon.
+    """
+
+    bvh.data = ts
+    bvh.box = triangles_list_box(ts, eps)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -3910,10 +3929,10 @@ def split_bvh_tree_with_rat_triangles(bvh):
     if bs is None:
         return
 
-    d, lo, hi = bs
-    bvh.split(d)
-    bvh.children[0].data = lo
-    bvh.children[1].data = hi
+    _, lo, hi = bs
+    bvh.empty_split()
+    init_bvh_tree_with_triangles_list(bvh.children[0], lo)
+    init_bvh_tree_with_triangles_list(bvh.children[1], hi)
 
     # Recursive split.
     split_bvh_tree_with_rat_triangles(bvh.children[0])
@@ -3941,8 +3960,8 @@ def rat_triangles_bvh_tree(ts):
         t.i = i
 
     # Create root of BVH.
-    bvh = bvh_tree.BVHTree(triangles_list_box(ts, 0.0))
-    bvh.data = ts
+    bvh = bvh_tree.BVHTree()
+    init_bvh_tree_with_triangles_list(bvh, ts)
     split_bvh_tree_with_rat_triangles(bvh)
 
     return bvh

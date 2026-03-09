@@ -13,7 +13,7 @@ class BVHTree:
 
     #-----------------------------------------------------------------------------------------------
 
-    def __init__(self, box):
+    def __init__(self, box=None):
         """
         Create BVH-tree.
 
@@ -100,6 +100,19 @@ class BVHTree:
         b1, b2 = self.box.split(d)
         self.children.append(BVHTree(b1))
         self.children.append(BVHTree(b2))
+
+    #-----------------------------------------------------------------------------------------------
+
+    def empty_split(self):
+        """
+        Empty split without boxes.
+        """
+
+        if self.children:
+            raise Exception('bvh_tree:BVHTree.empty_split: can not split tree which has children.')
+
+        self.children.append(BVHTree())
+        self.children.append(BVHTree())
 
 #===================================================================================================
 
