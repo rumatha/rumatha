@@ -1836,15 +1836,20 @@ class Mesh:
             print(f'\t walk big/small tri    : '
                   f'{walk_big_tri_count} ({walk_big_tri_count_perc}%), '
                   f'{walk_small_tri_count} ({walk_small_tri_count_perc}%)')
-            print(f'\t ini nodes/edges/faces: '
-                  f'{end_nodes_count}, {end_edges_count}, {end_faces_count}')
+            end_nodes_count_perc = end_nodes_count / ini_nodes_count * 100.0
+            end_edges_count_perc = end_edges_count / ini_edges_count * 100.0
+            end_faces_count_perc = end_faces_count / ini_faces_count * 100.0
+            print(f'\t end nodes/edges/faces: '
+                  f'{end_nodes_count} ({end_nodes_count_perc}%), '
+                  f'{end_edges_count} ({end_edges_count_perc}%), '
+                  f'{end_faces_count} ({end_faces_count_perc}%)')
 
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/tetrahedron_double'
+    mesh_name = '../data/meshes/bunny_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
 
