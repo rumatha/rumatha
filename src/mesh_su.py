@@ -1733,10 +1733,21 @@ class Mesh:
         f = min(m.faces, key=lambda f: min([n.p[0] for n in f.nodes]))
 
         # Breadth-first traversal.
+        walk_counter = 1
         stack = [f]
         while len(stack) > 0:
+            walk_counter = walk_counter + 1
+
+            if is_log:
+                print(f'DST.Phase.4: walk: {walk_counter}')
+
             f = stack.pop(0)
+
+            if f.mark == 1:
+                continue
+
             f.mark = 1
+
             for e in f.edges:
                 faces_count = len(e.faces)
                 if faces_count == 1:
@@ -1787,7 +1798,7 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/tetrahedron_double'
+    mesh_name = '../data/meshes/bunny_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)
