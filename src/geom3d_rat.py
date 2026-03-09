@@ -929,7 +929,7 @@ class Segment:
 
     #-----------------------------------------------------------------------------------------------
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, line=None):
         """
         Constructor by points.
 
@@ -939,6 +939,8 @@ class Segment:
             A Point.
         B : Point
             B Point.
+        line : Line
+            Line (if we know line exactly).
         """
 
         # Construction of zero length segment is forbidden.
@@ -952,7 +954,10 @@ class Segment:
         self.sort_points()
 
         # Construct line for this segment.
-        self.line = Line.from_points(self.A, self.B)
+        if line is None:
+            self.line = Line.from_points(self.A, self.B)
+        else:
+            self.line = line
 
         # Increment counter.
         Segment.counter = Segment.counter + 1
@@ -1249,12 +1254,13 @@ class Segment:
             j = j - 1
 
         # Separate points are ps[i] < .. < ps[j].
+        # Issue #13. we know line while splitting segment.
         ss = []
         prev = self.A
         while i <= j:
-            ss.append(Segment(prev, ps[i]))
+            ss.append(Segment(prev, ps[i], self.line))
             if i == j:
-                ss.append(Segment(ps[i], self.B))
+                ss.append(Segment(ps[i], self.B, self.line))
                 break
             prev = ps[i]
             i = i + 1
@@ -1605,9 +1611,14 @@ class Segments:
 
     #-----------------------------------------------------------------------------------------------
 
-    def triangles(self):
+    def triangles(self, plane):
         """
         Get triangles.
+
+        Parameters
+        ----------
+        plane : Plane
+            Plane.
 
         Returns
         -------
@@ -1632,7 +1643,8 @@ class Segments:
                                 for p in [s.A, s.B, q.A, q.B, r.A, r.B]:
                                     ps.add_unique(p)
                                 if ps.count() == 3:
-                                    t = Triangle(ps[0], ps[1], ps[2])
+                                    # Issue #13. We know exact plane while triangulation.
+                                    t = Triangle(ps[0], ps[1], ps[2], plane)
                                     ts.add(t)
 
         return ts
@@ -2286,7 +2298,7 @@ class Triangle:
 
     #-----------------------------------------------------------------------------------------------
 
-    def __init__(self, A, B, C):
+    def __init__(self, A, B, C, plane=None):
         """
         Constructor.
 
@@ -2298,6 +2310,8 @@ class Triangle:
             B Point.
         C : Point
             C Point.
+        plane : Plane
+            Plane.
         """
 
         if (A == B) or (B == C) or (A == C):
@@ -2316,7 +2330,10 @@ class Triangle:
         self.sides = [self.AB, self.BC, self.AC]
 
         # Plane.
-        self.plane = Plane.from_points(self.A, self.B, self.C)
+        if plane is None:
+            self.plane = Plane.from_points(self.A, self.B, self.C)
+        else:
+            self.plane = plane
 
         # Construct outer normal for triangle.
         self.outer_normal = Vector.vector_product(self.B - self.A, self.C - self.A)
@@ -2668,7 +2685,7 @@ class Triangle:
         msc = pas.minimal_segments_coverage()
 
         # Get all possible triangles.
-        ts = msc.triangles()
+        ts = msc.triangles(self.plane)
 
         # Make mosaic from triangles.
         ts.construct_mosaic()
