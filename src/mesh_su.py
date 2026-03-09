@@ -1624,11 +1624,12 @@ class Mesh:
 
         # Find all pairs of possible intersected triangles.
         triangles_pairs = geom3d_rat.extract_triangles_pairs(bvh)
+        triangles_pairs_count = len(triangles_pairs)
 
         if is_log:
-            tpn = len(triangles_pairs)
             apn = n * (n - 1) / 2
-            print(f'DSI.Phase.1: prep: {tpn} pairs to check ({tpn / apn * 100.0:.2f}%)')
+            print(f'DSI.Phase.1: prep: {triangles_pairs_count} pairs to check'
+                  f' ({triangles_pairs_count / apn * 100.0:.2f}%)')
 
         # Create result mesh with single zone.
         m = Mesh()
@@ -1647,32 +1648,33 @@ class Mesh:
             print('DSI.Phase.2: isec: begin')
 
         # Process every triangles pair.
-        for i in range(n):
-            t1, q1 = ts[i], qs[i]
-            for j in range(i + 1, n):
-                t2, q2 = ts[j], qs[j]
+        cur_pair = 0
+        for t1, t2 in triangles_pairs:
+            cur_pair = cur_pair + 1
+            i, j = t1.i, t2.i
+            q1, q2 = qs[i], qs[j]
 
-                # Find intersection.
-                r = geom3d_rat.Intersection.triangle_triangle(t1, t2)
+            # Find intersection.
+            r = geom3d_rat.Intersection.triangle_triangle(t1, t2)
 
-                # Analyze types of intersection.
-                if r is None:
-                    pass
-                elif isinstance(r, geom3d_rat.Point):
-                    if not r.is_triangle_vertex(t1):
-                        q1.add_unique_point(r)
-                    if not r.is_triangle_vertex(t2):
-                        q2.add_unique_point(r)
-                elif isinstance(r, geom3d_rat.Segment):
-                    if not r.is_triangle_side(t1):
-                        q1.add_unique_segment(r)
-                    if not r.is_triangle_side(t2):
-                        q2.add_unique_segment(r)
-                else:
-                    raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
-                                    'not implemented')
+            # Analyze types of intersection.
+            if r is None:
+                pass
+            elif isinstance(r, geom3d_rat.Point):
+                if not r.is_triangle_vertex(t1):
+                    q1.add_unique_point(r)
+                if not r.is_triangle_vertex(t2):
+                    q2.add_unique_point(r)
+            elif isinstance(r, geom3d_rat.Segment):
+                if not r.is_triangle_side(t1):
+                    q1.add_unique_segment(r)
+                if not r.is_triangle_side(t2):
+                    q2.add_unique_segment(r)
+            else:
+                raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
+                                'not implemented')
 
-            print(f'DSI.Phase.2: isec: {i + 1} / {n}')
+            print(f'DSI.Phase.2: isec: {cur_pair} / {triangles_pairs_count}')
 
         if is_log:
             print('DSI.Phase.2: isec: end')
