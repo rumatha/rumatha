@@ -9,6 +9,8 @@ import bvh_tree
 from fractions import Fraction as Fr
 import time
 
+from src.geom3d_rat import extract_triangles_pairs
+
 #===================================================================================================
 
 # Valuable digits in coordinates.
@@ -564,6 +566,66 @@ class Mesh:
         # Load.
         if not filename is None:
             self.load(filename, is_merge_nodes=is_merge_nodes)
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def zones_count(self):
+        """
+        Zones count.
+
+        Returns
+        -------
+        int
+            Zones count.
+        """
+
+        return len(self.zones)
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def nodes_count(self):
+        """
+        Nodes count.
+
+        Returns
+        -------
+        int
+            Nodes count.
+        """
+
+        return len(self.nodes)
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def edges_count(self):
+        """
+        Edges count.
+
+        Returns
+        -------
+        int
+            Edges count.
+        """
+
+        return len(self.edges)
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def faces_count(self):
+        """
+        Faces count.
+
+        Returns
+        -------
+        int
+            Faces count.
+        """
+
+        return len(self.faces)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1543,7 +1605,8 @@ class Mesh:
         #-------------------------------------------------------
 
         if is_log:
-            print('DSI.Phase.1: prep: begin')
+            print('DSI.Phase.1: prep: begin '
+                  f'({self.nodes_count} nodes, {self.edges_count} edges, {self.faces_count} faces)')
 
         # Convert coordinates to rational.
         self.convert_coordinates_real_to_rat(denom)
@@ -1554,8 +1617,18 @@ class Mesh:
         qs = [geom3d_rat.PointsAndSegments() for _ in range(n)]
 
         # Create BVH tree.
-        bvh = geom3d_rat.rat_triangles_bvh_tree(ts)
-        bvh.print()
+        bvh = geom3d_rat.rat_triangles_bvh_tree(ts, 0.001)
+
+        if is_log:
+            print('DIS.Phase.1: prep: BVH-tree constructed')
+
+        # Find all pairs of possible intersected triangles.
+        triangles_pairs = geom3d_rat.extract_triangles_pairs(bvh)
+
+        if is_log:
+            tpn = len(triangles_pairs)
+            apn = n * (n - 1) / 2
+            print(f'DSI.Phase.1: prep: {tpn} pairs to check ({tpn / apn * 100.0:.2f}%)')
 
         # Create result mesh with single zone.
         m = Mesh()
@@ -1695,11 +1768,9 @@ class Mesh:
         if is_log:
             print('DSI.Phase.5: post: begin')
 
-        # Convert coordinates to real.
-        self.convert_coordinates_rat_to_real()
-
         if is_log:
-            print('DSI.Phase.5: post: end')
+            print('DSI.Phase.5: post: end'
+                  f' ({m.nodes_count} nodes, {m.edges_count} edges, {m.faces_count} faces)')
 
         ph5t = time.time()
 
@@ -1714,7 +1785,7 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/small_sphere_double'
+    mesh_name = '../data/meshes/tetrahedron_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
     #mesh.print(True, True)

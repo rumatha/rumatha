@@ -275,6 +275,30 @@ class Box:
             sz1, sz2 = self.sz.split()
             return Box(self.sx, self.sy, sz1, self.eps), Box(self.sx, self.sy, sz2, self.eps)
 
+    #-----------------------------------------------------------------------------------------------
+
+    def is_intersect_box(self, box):
+        """
+        Check if box intersects another box.
+
+        Parameters
+        ----------
+        box : Box
+            Box.
+
+        Returns
+        -------
+        bool
+            True - if boxes intersect,
+            False - otherwise.
+        """
+
+        e = self.eps + box.eps
+
+        return (self.sx.dist_to_segment(box.sx) < e) \
+               and (self.sy.dist_to_segment(box.sy) < e) \
+               and (self.sz.dist_to_segment(box.sz) < e)
+
 #===================================================================================================
 
 if __name__ == '__main__':

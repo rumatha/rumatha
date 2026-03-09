@@ -84,6 +84,22 @@ class BVHTree:
 
     #-----------------------------------------------------------------------------------------------
 
+    @property
+    def is_list(self):
+        """
+        Check if BVH is list.
+
+        Returns
+        -------
+        bool
+            True - if list,
+            False - otherwise.
+        """
+
+        return not self.children
+
+    #-----------------------------------------------------------------------------------------------
+
     def split(self, d):
         """
         Split BVH tree by direction.
@@ -94,7 +110,7 @@ class BVHTree:
             Direction ('x', 'y', 'z').
         """
 
-        if self.children:
+        if not self.is_list:
             raise Exception('bvh_tree:BVHTree.split: can not split tree which has children.')
 
         b1, b2 = self.box.split(d)
@@ -108,7 +124,7 @@ class BVHTree:
         Empty split without boxes.
         """
 
-        if self.children:
+        if not self.is_list:
             raise Exception('bvh_tree:BVHTree.empty_split: can not split tree which has children.')
 
         self.children.append(BVHTree())

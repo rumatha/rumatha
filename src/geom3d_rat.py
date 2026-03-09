@@ -4058,6 +4058,77 @@ def rat_triangles_bvh_tree(ts, eps):
 
 #---------------------------------------------------------------------------------------------------
 
+def construct_triangles_pairs(bvh1, bvh2, ps, cache):
+    """
+    Construct triangles pairs for two BVH trees.
+
+    Parameters
+    ----------
+    bvh1 : bvh_tree.BVHTree
+        First tree.
+    bvh2 : bvh_tree.BVHTree
+        Second tree.
+    ps : [(Triangle, Triangle)]
+        List of tringles pairs.
+    cache : [(int, int)]
+        Cache of triangels pairs.
+    """
+
+    if not bvh1.box.is_intersect_box(bvh2.box):
+        # No intersection of boxes - nothing to check.
+        return
+
+    if bvh1.is_list:
+        if bvh2.is_list:
+            # Both are lists - check each pair.
+            for t1 in bvh1.data:
+                for t2 in bvh2.data:
+                    if t1.i < t2.i:
+                        k = (t1.i, t2.i)
+                        if not k in cache:
+                            cache.add(k)
+                            ps.append((t1, t2))
+        else:
+            # bvh1 - list, bvh2 has children.
+            for b in bvh2.children:
+                construct_triangles_pairs(bvh1, b, ps, cache)
+    else:
+        if bvh2.is_list:
+            # bvh1 has children, bvh2 - list.
+            for b in bvh1.children:
+                construct_triangles_pairs(b, bvh2, ps, cache)
+        else:
+            # Both have children.
+            for b1 in bvh1.children:
+                for b2 in bvh2.children:
+                    construct_triangles_pairs(b1, b2, ps, cache)
+
+#---------------------------------------------------------------------------------------------------
+
+def extract_triangles_pairs(bvh):
+    """
+    Extract triangle pairs from BVH tree.
+
+    Parameters
+    ----------
+    bvh : bvh_tree.BVHTree
+        Tree.
+
+    Returns
+    -------
+    [(Triangle, Triangle)]
+        List of triangles pairs to check.
+    """
+
+    ps = []
+    cache = set()
+
+    construct_triangles_pairs(bvh, bvh, ps, cache)
+
+    return ps
+
+#---------------------------------------------------------------------------------------------------
+
 def print_statistics():
     """
     Print statistics.

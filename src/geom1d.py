@@ -101,6 +101,30 @@ class Segment:
 
         return Segment(self.lo, self.mid()), Segment(self.mid(), self.hi)
 
+    #-----------------------------------------------------------------------------------------------
+
+    def dist_to_segment(self, s):
+        """
+        Distance to segment.
+
+        Parameters
+        ----------
+        s : Segment
+            Segment.
+
+        Returns
+        -------
+        float
+            Distance.
+        """
+
+        if self.hi < s.lo:
+            return s.lo - self.hi
+        elif s.hi < self.lo:
+            return self.lo - s.hi
+        else:
+            return 0.0
+
 #===================================================================================================
 
 if __name__ == '__main__':
