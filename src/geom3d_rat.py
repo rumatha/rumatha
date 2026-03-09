@@ -3794,8 +3794,8 @@ def split_triangles_list(ts, d, v):
 
     Parameters
     ----------
-    ts : [(Triangle, int)]
-        List of pairs - triangle / index.
+    ts : [Triangle]
+        List triangles.
     d : str
         Direction ('x', 'y', 'z').
     v : float
@@ -3803,8 +3803,8 @@ def split_triangles_list(ts, d, v):
 
     Returns
     -------
-    [(Triangle, int)], [(Triangle, int)]
-        Splitted structure.
+    [Triangles], [Triangles]
+        Splitted list.
     """
 
     ts_lo, ts_hi = [], []
@@ -3816,28 +3816,28 @@ def split_triangles_list(ts, d, v):
         return (v1 >= v) or (v2 >= v) or (v3 >= v)
 
     if d == 'x':
-        for (t, i) in ts:
+        for t in ts:
             v1, v2, v3 = t.A.x, t.B.x, t.C.x
             if anyloeq(v1, v2, v3, v):
-                ts_lo.append((t, i))
+                ts_lo.append(t)
             if anyhieq(v1, v2, v3, v):
-                ts_hi.append((t, i))
+                ts_hi.append(t)
     elif d == 'y':
-        for (t, i) in ts:
+        for t in ts:
             v1, v2, v3 = t.A.y, t.B.y, t.C.y
             if anyloeq(v1, v2, v3, v):
-                ts_lo.append((t, i))
+                ts_lo.append(t)
             if anyhieq(v1, v2, v3, v):
-                ts_hi.append((t, i))
+                ts_hi.append(t)
     else:
         if d != 'z':
             raise Exception('geom3d_rat:split_triangles_Liist: wrong split direction.')
-        for (t, i) in ts:
+        for t in ts:
             v1, v2, v3 = t.A.z, t.B.z, t.C.z
             if anyloeq(v1, v2, v3, v):
-                ts_lo.append((t, i))
+                ts_lo.append(t)
             if anyhieq(v1, v2, v3, v):
-                ts_hi.append((t, i))
+                ts_hi.append(t)
 
     return ts_lo, ts_hi
 
@@ -3849,8 +3849,8 @@ def best_split_triangles_list(ts, vx, vy, vz):
 
     Parameters
     ----------
-    ts : [(Triangle, int)]
-        List of pairs - triangle / index.
+    ts : [Triangles]
+        List of triangles.
     vx : float
         Value for X split.
     vy : float
@@ -3860,8 +3860,8 @@ def best_split_triangles_list(ts, vx, vy, vz):
 
     Returns
     -------
-    (str, (Triangle, int), (Triangle, int)) | None
-        Splitted structure with direction,
+    (str, [Triangle], [Triangle]) | None
+        Splitted list,
         or None - if split is not possible.
     """
 
@@ -3932,16 +3932,17 @@ def rat_triangles_bvh_tree(ts):
 
     Returns
     -------
-    bvh_tree.BVHTRee
+    bvh_tree.BVHTree
         BVH tree.
     """
 
-    # Wrap triangles.
-    tss = [(ts[i], i) for i in range(len(ts))]
+    # Set int for each triangle.
+    for i, t in enumerate(ts):
+        t.i = i
 
     # Create root of BVH.
     bvh = bvh_tree.BVHTree(triangles_list_box(ts, 0.0))
-    bvh.data = tss
+    bvh.data = ts
     split_bvh_tree_with_rat_triangles(bvh)
 
     return bvh
