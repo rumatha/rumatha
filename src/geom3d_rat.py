@@ -2366,6 +2366,96 @@ class Triangle:
 
     #-----------------------------------------------------------------------------------------------
 
+    @property
+    def minx(self):
+        """
+        Min X.
+
+        Returns
+        -------
+        Fraction
+            Min X value.
+        """
+
+        return min([p.x for p in self.points])
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def maxx(self):
+        """
+        Max X.
+
+        Returns
+        -------
+        Fraction
+            Max X value.
+        """
+
+        return max([p.x for p in self.points])
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def miny(self):
+        """
+        Min Y.
+
+        Returns
+        -------
+        Fraction
+            Min Y value.
+        """
+
+        return min([p.y for p in self.points])
+
+    # -----------------------------------------------------------------------------------------------
+
+    @property
+    def maxy(self):
+        """
+        Max Y.
+
+        Returns
+        -------
+        Fraction
+            Max Y value.
+        """
+
+        return max([p.y for p in self.points])
+
+    # -----------------------------------------------------------------------------------------------
+
+    @property
+    def minz(self):
+        """
+        Min Z.
+
+        Returns
+        -------
+        Fraction
+            Min Z value.
+        """
+
+        return min([p.z for p in self.points])
+
+    # -----------------------------------------------------------------------------------------------
+
+    @property
+    def maxz(self):
+        """
+        Max Z.
+
+        Returns
+        -------
+        Fraction
+            Max Z value.
+        """
+
+        return max([p.z for p in self.points])
+
+    # -----------------------------------------------------------------------------------------------
+
     def is_incident(self, obj):
         """
         Check if triangle is incident to point or segment.
@@ -3755,7 +3845,7 @@ OXZ = Plane.from_points(O, X, Z)
 # Global functions.
 #===================================================================================================
 
-def triangles_list_box(ts, eps=0.0):
+def triangles_list_box(ts, eps):
     """
     Box of triangles list.
 
@@ -3772,15 +3862,9 @@ def triangles_list_box(ts, eps=0.0):
         Box.
     """
 
-    lo, hi = float('inf'), float('-inf')
-    xlo, xhi, ylo, yhi, zlo, zhi = lo, hi, lo, hi, lo, hi
-
-    # Check all triangles.
-    for t in ts:
-        ps = t.points
-        xlo, xhi = min(xlo, min([p.x for p in ps])), max(xhi, max([p.x for p in ps]))
-        ylo, yhi = min(ylo, min([p.y for p in ps])), max(yhi, max([p.y for p in ps]))
-        zlo, zhi = min(zlo, min([p.z for p in ps])), max(zhi, max([p.z for p in ps]))
+    xlo, xhi = min([t.minx for t in ts]), max([t.maxx for t in ts])
+    ylo, yhi = min([t.miny for t in ts]), max([t.maxy for t in ts])
+    zlo, zhi = min([t.minz for t in ts]), max([t.maxz for t in ts])
 
     return geom3d.Box(geom1d.Segment(float(xlo), float(xhi)),
                       geom1d.Segment(float(ylo), float(yhi)),
@@ -3788,7 +3872,7 @@ def triangles_list_box(ts, eps=0.0):
 
 #---------------------------------------------------------------------------------------------------
 
-def init_bvh_tree_with_triangles_list(bvh, ts, eps=0.0):
+def init_bvh_tree_with_triangles_list(bvh, ts, eps):
     """
     Init BVH-tree with triangles list.
 
@@ -3807,7 +3891,7 @@ def init_bvh_tree_with_triangles_list(bvh, ts, eps=0.0):
 
 #---------------------------------------------------------------------------------------------------
 
-def split_triangles_list(ts, d, v):
+def split_triangles_list(ts, d, v, eps):
     """
     Split triangles list into two.
 
@@ -3819,6 +3903,8 @@ def split_triangles_list(ts, d, v):
         Direction ('x', 'y', 'z').
     v : float
         Split value.
+    eps : float
+        Epsilon.
 
     Returns
     -------
@@ -3828,41 +3914,41 @@ def split_triangles_list(ts, d, v):
 
     ts_lo, ts_hi = [], []
 
-    def anyloeq(v1, v2, v3, v):
-        return (v1 <= v) or (v2 <= v) or (v3 <= v)
+    def anylo(v1, v2, v3, v):
+        return (v1 < v + eps) or (v2 < v + eps) or (v3 < v + eps)
 
-    def anyhieq(v1, v2, v3, v):
-        return (v1 >= v) or (v2 >= v) or (v3 >= v)
+    def anyhi(v1, v2, v3, v):
+        return (v1 > v - eps) or (v2 > v - eps) or (v3 > v - eps)
 
     if d == 'x':
         for t in ts:
             v1, v2, v3 = t.A.x, t.B.x, t.C.x
-            if anyloeq(v1, v2, v3, v):
+            if anylo(v1, v2, v3, v):
                 ts_lo.append(t)
-            if anyhieq(v1, v2, v3, v):
+            if anyhi(v1, v2, v3, v):
                 ts_hi.append(t)
     elif d == 'y':
         for t in ts:
             v1, v2, v3 = t.A.y, t.B.y, t.C.y
-            if anyloeq(v1, v2, v3, v):
+            if anylo(v1, v2, v3, v):
                 ts_lo.append(t)
-            if anyhieq(v1, v2, v3, v):
+            if anyhi(v1, v2, v3, v):
                 ts_hi.append(t)
     else:
         if d != 'z':
-            raise Exception('geom3d_rat:split_triangles_Liist: wrong split direction.')
+            raise Exception('geom3d_rat:split_triangles_list: wrong split direction.')
         for t in ts:
             v1, v2, v3 = t.A.z, t.B.z, t.C.z
-            if anyloeq(v1, v2, v3, v):
+            if anylo(v1, v2, v3, v):
                 ts_lo.append(t)
-            if anyhieq(v1, v2, v3, v):
+            if anyhi(v1, v2, v3, v):
                 ts_hi.append(t)
 
     return ts_lo, ts_hi
 
 #---------------------------------------------------------------------------------------------------
 
-def best_split_triangles_list(ts, vx, vy, vz):
+def best_split_triangles_list(ts, vx, vy, vz, eps):
     """
     Check best split.
 
@@ -3876,6 +3962,8 @@ def best_split_triangles_list(ts, vx, vy, vz):
         Value for Y split.
     vz : float
         Value for Z split.
+    eps : float
+        Epsilon.
 
     Returns
     -------
@@ -3884,9 +3972,9 @@ def best_split_triangles_list(ts, vx, vy, vz):
         or None - if split is not possible.
     """
 
-    ts_xlo, ts_xhi = split_triangles_list(ts, 'x', vx)
-    ts_ylo, ts_yhi = split_triangles_list(ts, 'y', vy)
-    ts_zlo, ts_zhi = split_triangles_list(ts, 'z', vz)
+    ts_xlo, ts_xhi = split_triangles_list(ts, 'x', vx, eps)
+    ts_ylo, ts_yhi = split_triangles_list(ts, 'y', vy, eps)
+    ts_zlo, ts_zhi = split_triangles_list(ts, 'z', vz, eps)
     n = len(ts)
     ts_xlon, ts_xhin = len(ts_xlo), len(ts_xhi)
     ts_ylon, ts_yhin = len(ts_ylo), len(ts_yhi)
@@ -3924,15 +4012,15 @@ def split_bvh_tree_with_rat_triangles(bvh):
                         'can not split BVH tree with children.')
 
     [vx, vy, vz] = bvh.box.mids()
-    bs = best_split_triangles_list(bvh.data, vx, vy, vz)
+    bs = best_split_triangles_list(bvh.data, vx, vy, vz, bvh.box.eps)
 
     if bs is None:
         return
 
-    _, lo, hi = bs
+    d, lo, hi = bs
     bvh.empty_split()
-    init_bvh_tree_with_triangles_list(bvh.children[0], lo)
-    init_bvh_tree_with_triangles_list(bvh.children[1], hi)
+    init_bvh_tree_with_triangles_list(bvh.children[0], lo, bvh.box.eps)
+    init_bvh_tree_with_triangles_list(bvh.children[1], hi, bvh.box.eps)
 
     # Recursive split.
     split_bvh_tree_with_rat_triangles(bvh.children[0])
@@ -3940,7 +4028,7 @@ def split_bvh_tree_with_rat_triangles(bvh):
 
 #---------------------------------------------------------------------------------------------------
 
-def rat_triangles_bvh_tree(ts):
+def rat_triangles_bvh_tree(ts, eps):
     """
     Create rat triangles BVH tree.
 
@@ -3948,6 +4036,8 @@ def rat_triangles_bvh_tree(ts):
     ----------
     ts : [Triangle()]
         List of triangles.
+    eps : float
+        Epsilon.
 
     Returns
     -------
@@ -3961,7 +4051,7 @@ def rat_triangles_bvh_tree(ts):
 
     # Create root of BVH.
     bvh = bvh_tree.BVHTree()
-    init_bvh_tree_with_triangles_list(bvh, ts)
+    init_bvh_tree_with_triangles_list(bvh, ts, eps)
     split_bvh_tree_with_rat_triangles(bvh)
 
     return bvh

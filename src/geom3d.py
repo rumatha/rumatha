@@ -198,7 +198,39 @@ class Box:
             String representation.
         """
 
-        return f'[{self.sx} x {self.sy} x {self.sz}, eps {self.eps}]'
+        return f'[{self.sx} x {self.sy} x {self.sz}, eps {self.eps}, vol_eps {self.vol_eps}]'
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def vol(self):
+        """
+        Volume.
+
+        Returns
+        -------
+        float
+            Volume.
+        """
+
+        return self.sx.len * self.sy.len * self.sz.len
+
+    #-----------------------------------------------------------------------------------------------
+
+    @property
+    def vol_eps(self):
+        """
+        Volume with epsilon.
+
+        Returns
+        -------
+        float
+            Volume with epsilon.
+        """
+
+        e = self.eps
+
+        return (self.sx.len + 2 * e) * (self.sy.len + 2 * e) * (self.sz.len + 2 * e)
 
     #-----------------------------------------------------------------------------------------------
 
