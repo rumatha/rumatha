@@ -1,6 +1,7 @@
 """
 Mesh - Surface Unstructured.
 """
+from cgitb import small
 
 import numpy as np
 import geom3d
@@ -959,12 +960,18 @@ class Mesh:
             Zone.
         t : Triangle
             Triangle.
+
+        Returns
+        -------
+        Face
+            Face.
         """
 
         a = self.add_node(t.A, z, True)
         b = self.add_node(t.B, z, True)
         c = self.add_node(t.C, z, True)
-        self.add_face(a, b, c, z)
+
+        return self.add_face(a, b, c, z)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1605,8 +1612,11 @@ class Mesh:
         #-------------------------------------------------------
 
         if is_log:
+            ini_nodes_count = self.nodes_count
+            ini_edges_count = self.edges_count
+            ini_faces_count = self.faces_count
             print('DSI.Phase.1: prep: begin '
-                  f'({self.nodes_count} nodes, {self.edges_count} edges, {self.faces_count} faces)')
+                  f'({ini_nodes_count} nodes, {ini_edges_count} edges, {ini_faces_count} faces)')
 
         # Convert coordinates to rational.
         self.convert_coordinates_real_to_rat(denom)
@@ -1623,13 +1633,14 @@ class Mesh:
             print('DIS.Phase.1: prep: BVH-tree constructed')
 
         # Find all pairs of possible intersected triangles.
-        triangles_pairs = geom3d_rat.extract_triangles_pairs(bvh)
-        triangles_pairs_count = len(triangles_pairs)
+        pot_int_tri_pairs = geom3d_rat.extract_triangles_pairs(bvh)
+        pot_int_tri_pairs_count = len(pot_int_tri_pairs)
 
         if is_log:
-            apn = n * (n - 1) / 2
-            print(f'DSI.Phase.1: prep: {triangles_pairs_count} pairs to check'
-                  f' ({triangles_pairs_count / apn * 100.0:.2f}%)')
+            all_tri_pairs_count = n * (n - 1) // 2
+            pot_int_tri_pairs_count_perc = pot_int_tri_pairs_count / all_tri_pairs_count * 100.0
+            print(f'DSI.Phase.1: prep: {pot_int_tri_pairs_count} pairs to check'
+                  f' ({pot_int_tri_pairs_count_perc:.2f}%)')
 
         # Create result mesh with single zone.
         m = Mesh()
@@ -1647,9 +1658,9 @@ class Mesh:
         if is_log:
             print('DSI.Phase.2: isec: begin')
 
-        # Process every triangles pair.
+        # Process every triangles pair of possible intersected triangles.
         cur_pair = 0
-        for t1, t2 in triangles_pairs:
+        for t1, t2 in pot_int_tri_pairs:
             cur_pair = cur_pair + 1
             i, j = t1.i, t2.i
             q1, q2 = qs[i], qs[j]
@@ -1674,7 +1685,7 @@ class Mesh:
                 raise Exception('Mesh.delete_self_intersections_rat : complex intersection, '
                                 'not implemented')
 
-            print(f'DSI.Phase.2: isec: {cur_pair} / {triangles_pairs_count}')
+            print(f'DSI.Phase.2: isec: {cur_pair} / {pot_int_tri_pairs_count}')
 
         if is_log:
             print('DSI.Phase.2: isec: end')
@@ -1690,15 +1701,20 @@ class Mesh:
 
         # Triangulate triangles.
         triangulated_count = 0
+        big_tri_count = 0
+        small_tri_count = 0
         for i in range(n):
             t, q = ts[i], qs[i]
             if q.is_empty():
-                m.add_triangle(z, t)
+                f = m.add_triangle(z, t)
+                f.is_big = True
+                big_tri_count = big_tri_count + 1
             else:
                 small_triangles = t.triangulate(q)
                 if small_triangles.count() == 1:
                     raise Exception('mesh_su:Mesh.delete_self_intersections_rat: '
                                     'trivial triangulation.')
+                small_tri_count = small_tri_count + small_triangles.count()
                 for st in small_triangles:
                     if geom3d_rat.Vector.dot(t.outer_normal, st.outer_normal) < 0:
                         st.flip_normal()
@@ -1712,7 +1728,8 @@ class Mesh:
         m.convert_coordinates_rat_to_real()
 
         if is_log:
-            print(f'DSI.Phase.3: {triangulated_count} ({triangulated_count / n * 100}%) '
+            triangulated_count_perc = triangulated_count / n * 100.0
+            print(f'DSI.Phase.3: {triangulated_count} ({triangulated_count_perc}%) '
                   'triangles triangulated')
             print('DSI.Phase.3: trng: end')
 
@@ -1735,6 +1752,8 @@ class Mesh:
         # Breadth-first traversal.
         walk_counter = 1
         stack = [f]
+        walk_big_tri_count = 0
+        walk_small_tri_count = 0
         while len(stack) > 0:
             walk_counter = walk_counter + 1
 
@@ -1747,6 +1766,10 @@ class Mesh:
                 continue
 
             f.mark = 1
+            if hasattr(f, 'is_big'):
+                walk_big_tri_count = walk_big_tri_count + 1
+            else:
+                walk_small_tri_count = walk_small_tri_count + 1
 
             for e in f.edges:
                 faces_count = len(e.faces)
@@ -1782,8 +1805,11 @@ class Mesh:
             print('DSI.Phase.5: post: begin')
 
         if is_log:
+            end_nodes_count = m.nodes_count
+            end_edges_count = m.edges_count
+            end_faces_count = m.faces_count
             print('DSI.Phase.5: post: end'
-                  f' ({m.nodes_count} nodes, {m.edges_count} edges, {m.faces_count} faces)')
+                  f' ({end_nodes_count} nodes, {end_edges_count} edges, {end_faces_count} faces)')
 
         ph5t = time.time()
 
@@ -1793,21 +1819,43 @@ class Mesh:
             print(f'DSI: ph1 {(ph1t - ph0t):.4}, ph2 {(ph2t - ph1t):.4}, ph3 {(ph3t - ph2t):.4}, '
                   f'ph4 {(ph4t - ph3t):.4}, ph5 {(ph5t - ph4t):.4}')
 
+        if is_log:
+            print('DSI: statistics:')
+            print(f'\t ini nodes/edges/faces : '
+                  f'{ini_nodes_count}, {ini_edges_count}, {ini_faces_count}')
+            print(f'\t pot int triangles     : '
+                  f'{pot_int_tri_pairs_count} of {all_tri_pairs_count} '
+                  f'({pot_int_tri_pairs_count_perc}%)')
+            print(f'\t triangulated count    : '
+                  f'{triangulated_count} of {n} ({triangulated_count_perc}%)')
+            print(f'\t big/small tri count   : {big_tri_count}, {small_tri_count}')
+            mean_degree_of_cut = small_tri_count / triangulated_count
+            print(f'\t mean degree of cutting: {mean_degree_of_cut}')
+            walk_big_tri_count_perc = walk_big_tri_count / big_tri_count * 100.0
+            walk_small_tri_count_perc = walk_small_tri_count / small_tri_count * 100
+            print(f'\t walk big/small tri    : '
+                  f'{walk_big_tri_count} ({walk_big_tri_count_perc}%), '
+                  f'{walk_small_tri_count} ({walk_small_tri_count_perc}%)')
+            print(f'\t ini nodes/edges/faces: '
+                  f'{end_nodes_count}, {end_edges_count}, {end_faces_count}')
+
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/bunny_double'
+    mesh_name = '../data/meshes/tetrahedron_double'
     start = time.time()
     mesh = Mesh(f'{mesh_name}.dat')
-    #mesh.print(True, True)
 
     # Delete self-intersections.
     m = mesh.delete_self_intersections_rat(denom=1000000, is_log=True)
 
     m.store(f'{mesh_name}_out.dat')
+
+    # Print.
     geom3d_rat.print_statistics()
+
     print(f'total time : {(time.time() - start):.4}')
 
 # ==================================================================================================
