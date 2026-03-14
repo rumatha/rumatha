@@ -4431,7 +4431,7 @@ def test_triangulation(N):
 if __name__ == '__main__':
     start = time.time()
     test()
-    #test_triangulation(N=10)
+    test_triangulation(N=10)
     print_statistics()
     print(f'total time : {time.time() - start}')
 
