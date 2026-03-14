@@ -10,8 +10,6 @@ import bvh_tree
 from fractions import Fraction as Fr
 import time
 
-from src.geom3d_rat import extract_triangles_pairs
-
 #===================================================================================================
 
 # Valuable digits in coordinates.
@@ -1729,7 +1727,7 @@ class Mesh:
 
         if is_log:
             triangulated_count_perc = triangulated_count / n * 100.0
-            print(f'DSI.Phase.3: {triangulated_count} ({triangulated_count_perc}%) '
+            print(f'DSI.Phase.3: {triangulated_count} ({triangulated_count_perc:.2f}%) '
                   'triangles triangulated')
             print('DSI.Phase.3: trng: end')
 
@@ -1825,42 +1823,30 @@ class Mesh:
                   f'{ini_nodes_count}, {ini_edges_count}, {ini_faces_count}')
             print(f'\t pot int triangles     : '
                   f'{pot_int_tri_pairs_count} of {all_tri_pairs_count} '
-                  f'({pot_int_tri_pairs_count_perc}%)')
+                  f'({pot_int_tri_pairs_count_perc:.2f}%)')
             print(f'\t triangulated count    : '
-                  f'{triangulated_count} of {n} ({triangulated_count_perc}%)')
+                  f'{triangulated_count} of {n} ({triangulated_count_perc:.2f}%)')
             print(f'\t big/small tri count   : {big_tri_count}, {small_tri_count}')
             mean_degree_of_cut = small_tri_count / triangulated_count
-            print(f'\t mean degree of cutting: {mean_degree_of_cut}')
+            print(f'\t mean degree of cutting: {mean_degree_of_cut:.2f}')
             walk_big_tri_count_perc = walk_big_tri_count / big_tri_count * 100.0
             walk_small_tri_count_perc = walk_small_tri_count / small_tri_count * 100
             print(f'\t walk big/small tri    : '
-                  f'{walk_big_tri_count} ({walk_big_tri_count_perc}%), '
-                  f'{walk_small_tri_count} ({walk_small_tri_count_perc}%)')
+                  f'{walk_big_tri_count} ({walk_big_tri_count_perc:.2f}%), '
+                  f'{walk_small_tri_count} ({walk_small_tri_count_perc:.2f}%)')
             end_nodes_count_perc = end_nodes_count / ini_nodes_count * 100.0
             end_edges_count_perc = end_edges_count / ini_edges_count * 100.0
             end_faces_count_perc = end_faces_count / ini_faces_count * 100.0
             print(f'\t end nodes/edges/faces: '
-                  f'{end_nodes_count} ({end_nodes_count_perc}%), '
-                  f'{end_edges_count} ({end_edges_count_perc}%), '
-                  f'{end_faces_count} ({end_faces_count_perc}%)')
+                  f'{end_nodes_count} ({end_nodes_count_perc:.2f}%), '
+                  f'{end_edges_count} ({end_edges_count_perc:.2f}%), '
+                  f'{end_faces_count} ({end_faces_count_perc:.2f}%)')
 
         return m
 
 #===================================================================================================
 
 if __name__ == '__main__':
-    mesh_name = '../data/meshes/bunny_double'
-    start = time.time()
-    mesh = Mesh(f'{mesh_name}.dat')
+    pass
 
-    # Delete self-intersections.
-    m = mesh.delete_self_intersections_rat(denom=1000000, is_log=True)
-
-    m.store(f'{mesh_name}_out.dat')
-
-    # Print.
-    geom3d_rat.print_statistics()
-
-    print(f'total time : {(time.time() - start):.4}')
-
-# ==================================================================================================
+#===================================================================================================
