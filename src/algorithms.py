@@ -38,22 +38,22 @@ def get_expressions_set_from_digits(ds):
                 for hiv, hie in his:
 
                     # Add operation.
-                    s.add((lov + hiv, f'({loe} + {hie})'))
+                    s.add((lov + hiv, f'\left({loe} + {hie}\\right)'))
 
                     # Sub operation.
-                    s.add((lov - hiv, f'({loe} - {hie})'))
+                    s.add((lov - hiv, f'\left({loe} - {hie}\\right)'))
 
                     # Mul operation.
-                    s.add((lov * hiv, f'({loe} * {hie})'))
+                    s.add((lov * hiv, f'\left({loe} \cdot {hie}\\right)'))
 
                     # Div operation (we do not leave Z numbers).
                     if (hiv != 0) and (lov % hiv == 0):
-                        s.add((lov // hiv, f'({loe} / {hie})'))
+                        s.add((lov // hiv, f'\left({loe} / {hie}\\right)'))
 
                     # Power operation (we do not leave Z numbers and do not use too large numbers).
                     if hiv > 0:
                         if (lov == 1) or (hiv < power_limit):
-                            s.add((lov**hiv, f'({loe}^{hie})'))
+                            s.add((lov**hiv, f'\left({loe}^{hie}\\right)'))
     return s
 
 #===================================================================================================
@@ -61,6 +61,6 @@ def get_expressions_set_from_digits(ds):
 if __name__ == '__main__':
     for v, e in get_expressions_set_from_digits('4598722'):
         if v in range(2024, 2027):
-            print(f'{v} = {e}')
+            print(f'[math]{v} = {e}[/math]')
 
 #===================================================================================================
