@@ -81,6 +81,34 @@ class Node:
 
     #-----------------------------------------------------------------------------------------------
 
+    def edges_count(self):
+        """
+        Get edges count.
+
+        Returns
+        -------
+        int
+            Edges count.
+        """
+
+        return len(self.edges)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def faces_count(self):
+        """
+        Get faces count.
+
+        Returns
+        -------
+        int
+            Faces count.
+        """
+
+        return len(self.faces)
+
+    #-----------------------------------------------------------------------------------------------
+
     def is_isolated(self):
         """
         Check if node is isolated.
@@ -91,7 +119,7 @@ class Node:
         False - otherwise.
         """
 
-        return len(self.edges) == 0
+        return self.edges_count() == 0
 
     #-----------------------------------------------------------------------------------------------
 
@@ -185,6 +213,34 @@ class Edge:
 
     #-----------------------------------------------------------------------------------------------
 
+    def nodes_count(self):
+        """
+        Get nodes count.
+
+        Returns
+        -------
+        int
+            Nodes count.
+        """
+
+        return len(self.nodes)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def faces_count(self):
+        """
+        Get faces count.
+
+        Returns
+        -------
+        int
+            Faces count.
+        """
+
+        return len(self.faces)
+
+    #-----------------------------------------------------------------------------------------------
+
     def is_faces_free(self):
         """
         Check if edge is without incident faces.
@@ -195,7 +251,7 @@ class Edge:
         False - otherwise.
         """
 
-        return len(self.faces) == 0
+        return self.faces_count() == 0
 
     #-----------------------------------------------------------------------------------------------
 
@@ -210,7 +266,7 @@ class Edge:
             False - otherwise.
         """
 
-        return len(self.faces) == 1
+        return self.faces_count() == 1
 
     #-----------------------------------------------------------------------------------------------
 
@@ -342,6 +398,34 @@ class Face:
         """
 
         self.data[key] = value
+
+    #-----------------------------------------------------------------------------------------------
+
+    def nodes_count(self):
+        """
+        Get nodes count.
+
+        Returns
+        -------
+        int
+            Nodes count.
+        """
+
+        return len(self.nodes)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def edges_count(self):
+        """
+        Get edges count.
+
+        Returns
+        -------
+        int
+            Edges count.
+        """
+
+        return len(self.edges)
 
     #-----------------------------------------------------------------------------------------------
 
@@ -1586,6 +1670,42 @@ class Mesh:
 
     #-----------------------------------------------------------------------------------------------
 
+    def close(self, p):
+        """
+        Close mesh with point.
+
+        Parameters
+        ----------
+        p : point of any type
+            Point.
+        """
+
+        # Get all border edges.
+        es = [e for e in self.edges if e.is_border()]
+
+        # Process all border edges.
+        for e in es:
+            [a, b] = e.nodes
+            s = {a, b}
+            f = e.faces[0]
+            z = f.zone
+            [fa, fb, fc] = f.nodes
+
+            # Add new face.
+            if s == {fa, fb}:
+                new_f = m.add_face(fa, m.add_node(p, z, True), fb, z)
+            elif s == {fb, fc}:
+                new_f = m.add_face(fb, m.add_node(p, z, True), fc, z)
+            elif s == {fa, fc}:
+                new_f = m.add_face(fc, m.add_node(p, z, True), fa, z)
+            else:
+                raise Exception('mesh_su:Mesh.close: wrong edge while closing mesh.')
+
+            # Add data for new face.
+            new_f.copy_data_from(f)
+
+    #-----------------------------------------------------------------------------------------------
+
     def delete_self_intersections_rat(self, denom, is_log=False):
         """
         Delete self-intersections using rational coordinates.
@@ -1847,6 +1967,11 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    pass
+    name = '../data/meshes/tu/tu1_078_int'
+    m = Mesh(f'{name}.dat')
+    print('loaded...')
+    m.close(np.array([0.001, 0.0, 0.015]))
+    print('modified...')
+    m.store(f'{name}_closed.dat')
 
 #===================================================================================================
