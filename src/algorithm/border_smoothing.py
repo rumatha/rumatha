@@ -58,6 +58,126 @@ class Template:
 
     #-----------------------------------------------------------------------------------------------
 
+    def __eq__(self, t):
+        """
+        Check templates equal.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - if templates are equal,
+            False - otherwise.
+        """
+
+        return (self.lo, self.hi) == (t.lo, t.hi)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __ne__(self, t):
+        """
+        Check templates not equal.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - if templates are not equal,
+            False - otherwise.
+        """
+
+        return not (self == t)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __gt__(self, t):
+        """
+        Check template greater that another template.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - if template is greater than another template,
+            False - otherwise.
+        """
+
+        return (self.lo, self.hi) > (t.lo, t.hi)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __le__(self, t):
+        """
+        Check template less or equal than another template.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - if template is less or equal than another template,
+            False - otherwise.
+        """
+
+        return not (self > t)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __lt__(self, t):
+        """
+        Check template if less than another template.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - if template is less than another template,
+            False - otherwise.
+        """
+
+        return (self.lo, self.hi) < (t.lo, t.hi)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def __ge__(self, t):
+        """
+        Check template greater or equal than another template.
+
+        Parameters
+        ----------
+        t : Template
+            Another template.
+
+        Returns
+        -------
+        bool
+            True - is template is greater or equal than another template,
+            False - otherwise.
+        """
+
+        return not (self < t)
+
+    #-----------------------------------------------------------------------------------------------
+
     def has_conflict_with(self, t):
         """
         Check if template has conflict with another template.
@@ -109,6 +229,8 @@ class Templates:
         """
 
         if isinstance(t, Template):
+            if (self.items != []) and (t <= self.items[-1]):
+                raise Exception('wrong order of adding templates')
             self.items.append(t)
         elif isinstance(t, list):
             for ti in t:
@@ -234,20 +356,32 @@ def build_b_matrix(ts, is_log=False):
 
 #===================================================================================================
 
-if __name__ == '__main__':
+def test():
+    """
+    Test.
+    """
 
     # Test border smoothing.
-    ts = Templates([Template( 0,  2, 1, -1),
-                    Template( 1,  4, -3, -1),
-                    Template( 3,  5, 1, -1),
-                    Template( 5,  7, -1, -1),
-                    Template( 6,  8, 1, -1),
-                    Template( 7, 10, -3, -1),
-                    Template( 9, 11, 1, -1),
+    ts = Templates([Template(0, 2, 1, -1),
+                    Template(1, 4, -3, -1),
+                    Template(3, 5, 1, -1),
+                    Template(5, 7, -1, -1),
+                    Template(6, 8, 1, -1),
+                    Template(7, 10, -3, -1),
+                    Template(9, 11, 1, -1),
                     Template(10, 12, -1, -1),
                     Template(11, 14, +3, -1),
                     Template(13, 15, -1, -1),
                     Template(14, 16, +1, -1)])
-    build_b_matrix(ts, True)
+
+    b = build_b_matrix(ts, False)
+    best = min(b[0][0][0], b[0][0][1])
+
+    assert best == -4
+
+#===================================================================================================
+
+if __name__ == '__main__':
+    test()
 
 #===================================================================================================
