@@ -4,6 +4,7 @@ Smooth border between two domains of surface unstructured mesh.
 """
 
 import sys
+import random
 import numpy as np
 
 #===================================================================================================
@@ -218,6 +219,38 @@ class Templates:
 
     #-----------------------------------------------------------------------------------------------
 
+    @staticmethod
+    def create_random(n, step_lo, step_hi):
+
+        # Create empty templates.
+        ts = Templates()
+        cur = 0
+
+        # Adding templates
+        for _ in range(n):
+            off = random.randint(step_lo, step_hi)
+            lo = cur + off
+
+            # Create template.
+            typ = random.randint(0, 3)
+            if typ == 0:
+                t = Template(lo, lo + 2, 1, -1)
+            elif typ == 1:
+                t = Template(lo, lo + 2, -1, -1)
+            elif typ == 2:
+                t = Template(lo, lo + 3, 3, -1)
+            elif typ == 3:
+                t = Template(lo, lo + 3, -3, -1)
+            else:
+                raise Exception('wrong type of generated template')
+
+            ts.add(t)
+            cur = t.lo
+
+        return ts
+
+    #-----------------------------------------------------------------------------------------------
+
     def add(self, t):
         """
         Add template of templates.
@@ -251,6 +284,38 @@ class Templates:
         """
 
         return len(self.items)
+
+    #-----------------------------------------------------------------------------------------------
+
+    def is_empty(self):
+        """
+        Check if templates list is empty.
+
+        Returns
+        -------
+        bool
+            True - if templates list is empty,
+            False - otherwise.
+        """
+
+        return self.count() == 0
+
+    #-----------------------------------------------------------------------------------------------
+
+    def border_length(self):
+        """
+        Length of border.
+
+        Returns
+        -------
+        int
+            Length of border.
+        """
+
+        if self.is_empty():
+            return 0
+        else:
+            return self.items[-1].hi - self.items[0].lo
 
     #-----------------------------------------------------------------------------------------------
 
@@ -354,6 +419,28 @@ def build_b_matrix(ts, is_log=False):
 
     return b
 
+#---------------------------------------------------------------------------------------------------
+
+def smooth_border(ts):
+    """
+    Smooth border.
+
+    Parameters
+    ----------
+    ts : Templates
+        Templates.
+
+    Returns
+    -------
+    float
+        Border length reduce ratio.
+    """
+
+    b = build_b_matrix(ts)
+    best = min(b[0][0][0], b[0][0][1])
+
+    return -best / ts.border_length()
+
 #===================================================================================================
 
 def test():
@@ -379,9 +466,27 @@ def test():
 
     assert best == -4
 
+#---------------------------------------------------------------------------------------------------
+
+def test_random():
+    """
+    Random test.
+    """
+
+    max_step_lo = 10
+    step_delta = 5
+    templates_count = 100
+    repeats_count = 10
+
+    for step_lo in range(1, max_step_lo + 1):
+        for step_hi in range(step_lo, step_lo + step_delta):
+            r = [smooth_border(Templates.create_random(templates_count, step_lo, step_hi))
+                 for _ in range(repeats_count)]
+            print(f'steps = [{step_lo}, {step_hi}], r = {sum(r) / len(r)}')
+
 #===================================================================================================
 
 if __name__ == '__main__':
-    test()
+    test_random()
 
 #===================================================================================================
