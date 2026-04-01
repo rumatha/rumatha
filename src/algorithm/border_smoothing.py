@@ -251,6 +251,25 @@ class Templates:
 
     #-----------------------------------------------------------------------------------------------
 
+    def __getitem__(self, i):
+        """
+        Get item.
+
+        Parameters
+        ----------
+        i : int
+            Index.
+
+        Returns
+        -------
+        Template
+            i-th template.
+        """
+
+        return self.items[i]
+
+    #-----------------------------------------------------------------------------------------------
+
     def add(self, t):
         """
         Add template of templates.
@@ -315,7 +334,7 @@ class Templates:
         if self.is_empty():
             return 0
         else:
-            return self.items[-1].hi - self.items[0].lo
+            return self[-1].hi - self[0].lo
 
     #-----------------------------------------------------------------------------------------------
 
@@ -374,7 +393,7 @@ def build_b_matrix(ts, is_log=False):
 
     # Init for last template.
     ci = tn - 1
-    ct = ts.items[ci]
+    ct = ts[ci]
     b[ci][0][0] = 0
     b[ci][ct.ubaln][1] = -1
 
@@ -386,7 +405,7 @@ def build_b_matrix(ts, is_log=False):
         ci = ci - 1
         if ci < 0:
             break
-        ct = ts.items[ci]
+        ct = ts[ci]
 
         # ct - current template
         # nt - next template (already processed)
@@ -421,6 +440,62 @@ def build_b_matrix(ts, is_log=False):
 
 #---------------------------------------------------------------------------------------------------
 
+def best_reduce_border_from_b_matrix(b):
+    """
+    Get best reduce border value from B matrix.
+
+    Parameters
+    ----------
+    b : np.array
+        3d-matrix.
+
+    Returns
+    -------
+    int
+        Best reduce border length value.
+    """
+
+    return min(b[0][0][0], b[0][0][1])
+
+#---------------------------------------------------------------------------------------------------
+
+def find_templates_from_b_matrix(b, ts):
+    """
+    Find templates from B matrix.
+
+    Parameters
+    ----------
+    b : np.array
+        3d matrix.
+    ts : Templates
+        Templates.
+
+    Returns
+    -------
+    Templates
+        Templates for use.
+    """
+
+    best = best_reduce_border_from_b_matrix(b)
+    n = b.shape[0]
+
+    # Horizontal position of route track.
+    j = 0
+
+    # Templates for return.
+    ts_out = Templates()
+
+    for i in range(n):
+        if b[i][j][0] != best:
+            t = ts[i]
+            j = j - t.ubaln
+            best = best + 1
+            ts_out.add(t)
+
+    return ts_out
+
+#---------------------------------------------------------------------------------------------------
+
 def smooth_border(ts):
     """
     Smooth border.
@@ -437,7 +512,7 @@ def smooth_border(ts):
     """
 
     b = build_b_matrix(ts)
-    best = min(b[0][0][0], b[0][0][1])
+    best = best_reduce_border_from_b_matrix(b)
 
     return -best / ts.border_length()
 
@@ -462,9 +537,16 @@ def test():
                     Template(14, 16, +1, -1)])
 
     b = build_b_matrix(ts, False)
-    best = min(b[0][0][0], b[0][0][1])
+    best = best_reduce_border_from_b_matrix(b)
 
     assert best == -4
+
+    ts_out = find_templates_from_b_matrix(b, ts)
+
+    assert (ts_out[0].lo, ts_out[0].hi) == (5, 7)
+    assert (ts_out[1].lo, ts_out[1].hi) == (7, 10)
+    assert (ts_out[2].lo, ts_out[2].hi) == (11, 14)
+    assert (ts_out[3].lo, ts_out[3].hi) == (14, 16)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -487,6 +569,6 @@ def test_random():
 #===================================================================================================
 
 if __name__ == '__main__':
-    test_random()
+    test()
 
 #===================================================================================================
