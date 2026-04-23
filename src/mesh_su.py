@@ -1967,10 +1967,10 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    name = '../data/meshes/tu/tu1_078_int'
+    name = '../data/meshes/air_inlet/air_inlet_int'
     m = Mesh(f'{name}.dat')
     print('loaded...')
-    m.close(np.array([0.001, 0.0, 0.015]))
+    m.close(np.array([15.0, 0.0, -5.0]))
     print('modified...')
     m.store(f'{name}_closed.dat')
 
