@@ -10,6 +10,8 @@ import bvh_tree
 from fractions import Fraction as Fr
 import time
 
+from src.geom3d import Triangle
+
 #===================================================================================================
 
 # Valuable digits in coordinates.
@@ -1706,6 +1708,50 @@ class Mesh:
 
     #-----------------------------------------------------------------------------------------------
 
+    def get_refined_1to4_mesh(self):
+        """
+        Get refined mesh.
+        All cells are refined in 1-to-4 manner:
+
+               * A                      * A
+              / \                      / \
+             /   \                  F *---* D
+            /     \       ->         /\   /\
+           /       \                /  \E/  \
+        C *---------* B          C *----*---* B
+
+          ABC             ->       ADF, DBE, EFD, FEC
+
+        Returns
+        -------
+        Mesh
+            Refined mesh.
+        """
+
+        # Create mesh.
+        m = Mesh()
+        z = m.add_zone('SINGLE ZONE')
+
+        # Pass all cells.
+        i = 0
+        for f in self.faces:
+            A, B, C = f.nodes[0].p, f.nodes[1].p, f.nodes[2].p
+            D, E, F = 0.5 * (A + B), 0.5 * (B + C), 0.5 * (C + A)
+            nf = m.add_triangle(z, geom3d.Triangle(A, D, F))
+            nf.copy_data_from(f)
+            nf = m.add_triangle(z, geom3d.Triangle(D, B, E))
+            nf.copy_data_from(f)
+            nf = m.add_triangle(z, geom3d.Triangle(E, F, D))
+            nf.copy_data_from(f)
+            nf = m.add_triangle(z, geom3d.Triangle(F, E, C))
+            nf.copy_data_from(f)
+            print(i)
+            i = i + 1
+
+        return m
+
+    #-----------------------------------------------------------------------------------------------
+
     def delete_self_intersections_rat(self, denom, is_log=False):
         """
         Delete self-intersections using rational coordinates.
@@ -1967,11 +2013,22 @@ class Mesh:
 #===================================================================================================
 
 if __name__ == '__main__':
-    name = '../data/meshes/air_inlet/air_inlet_int'
+
+    # Load-refine-store mesh.
+    name = '../data/meshes/naca/origin'
     m = Mesh(f'{name}.dat')
-    print('loaded...')
-    m.close(np.array([15.0, 0.0, -5.0]))
-    print('modified...')
-    m.store(f'{name}_closed.dat')
+    print('loaded')
+    m1 = m.get_refined_1to4_mesh()
+    print('refined')
+    m1.store(f'{name}_out.dat')
+    print('stored')
+
+    # Self-intersections elimination.
+    #name = '../data/meshes/air_inlet/air_inlet_int'
+    #m = Mesh(f'{name}.dat')
+    #print('loaded...')
+    #m.close(np.array([15.0, 0.0, -5.0]))
+    #print('modified...')
+    #m.store(f'{name}_closed.dat')
 
 #===================================================================================================
